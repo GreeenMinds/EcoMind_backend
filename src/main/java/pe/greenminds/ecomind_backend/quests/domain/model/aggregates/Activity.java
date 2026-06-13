@@ -1,72 +1,53 @@
 package pe.greenminds.ecomind_backend.quests.domain.model.aggregates;
 
-import lombok.Getter;
-import lombok.Setter;
-import pe.greenminds.ecomind_backend.quests.domain.model.events.ActivityCreatedEvent;
-import pe.greenminds.ecomind_backend.quests.domain.model.events.QuestCreatedEvent;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Positive;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.ActivityType;
-import pe.greenminds.ecomind_backend.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
+import pe.greenminds.ecomind_backend.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 
-import java.util.Objects;
+@Entity
+@Table(name = "activities")
+public class Activity extends AuditableAbstractAggregateRoot<Activity> {
 
-public class Activity extends AbstractDomainAggregateRoot {
-
-    @Getter
-    @Setter
-    private Long id;
-
-    @Setter
+    @Column(name = "quest_id", nullable = false)
     private Long questId;
+
     private String description;
 
-    @Setter
-    private Integer order;
-    private ActivityType activityType;
+    @Positive
+    @Column(nullable = false)
+    private Integer position;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ActivityType type;
+
+    @Column(name = "image_url")
     private String image;
 
-    public Activity() {
+    protected Activity() {}
 
-    }
-
-    public Activity(Long id, Long questId, String description, Integer order, ActivityType activityType, String image) {
-        this.id = id;
-        this.questId = Objects.requireNonNull(questId, "QuestID is required");
+    public Activity(Long questId, String description, Integer position, ActivityType type, String image) {
+        this.questId = questId;
         this.description = description;
-        this.order = Objects.requireNonNull(order, "Order is required");
-        this.activityType = Objects.requireNonNull(activityType, "ActivityType is required");
+        this.position = position;
+        this.type = type;
         this.image = image;
-
-        if(order < 1){
-            throw new IllegalArgumentException("Order must be more or equal to 1");
-        }
     }
 
-    public Activity(Long questId, String description, Integer order, ActivityType type, String image) {
-        this(null, questId, description, order, type, image);
-    }
+    public Long getQuestId() { return questId; }
+    public String getDescription() { return description; }
+    public Integer getPosition() { return position; }
+    public ActivityType getType() { return type; }
+    public String getImage() { return image; }
 
-    public void onCreated() {
-        registerDomainEvent(ActivityCreatedEvent.from(this));
-    }
+    public void setPosition(Integer position) { this.position = position; }
 
-    public Long getQuestId() {
-        return questId;
+    public void updateInformation(Long questId, String description, Integer position, ActivityType type, String image) {
+        this.questId = questId;
+        this.description = description;
+        this.position = position;
+        this.type = type;
+        this.image = image;
     }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public Integer getOrder() {
-        return order;
-    }
-
-    public ActivityType getActivityType() {
-        return activityType;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
 }

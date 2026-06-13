@@ -1,14 +1,15 @@
 package pe.greenminds.ecomind_backend.quests.application.internal.commandservices;
 
 import org.springframework.stereotype.Service;
-import pe.greenminds.ecomind_backend.quests.application.commandservices.QuestCommandService;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.Quest;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.CreateQuestCommand;
+import pe.greenminds.ecomind_backend.quests.domain.model.commands.DeleteQuestCommand;
+import pe.greenminds.ecomind_backend.quests.domain.model.commands.UpdateQuestCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Reward;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestRepository;
-import org.springframework.stereotype.Service;
-import pe.greenminds.ecomind_backend.shared.application.result.ApplicationError;
-import pe.greenminds.ecomind_backend.shared.application.result.Result;
+import pe.greenminds.ecomind_backend.quests.domain.services.QuestCommandService;
+
+import java.util.Optional;
 
 @Service
 public class QuestCommandServiceImpl implements QuestCommandService {
@@ -20,37 +21,35 @@ public class QuestCommandServiceImpl implements QuestCommandService {
     }
 
     @Override
-    public Result<Quest, ApplicationError> handle(CreateQuestCommand command) {
-        try {
-            var reward = new Reward(
-                    command.reward_gems(),
-                    command.reward_ecopoints()
-            );
+    public Long handle(CreateQuestCommand command) {
+        var reward = new Reward(command.rewardGems(), command.rewardEcopoints());
+        var quest = new Quest(
+            command.minigameId(), command.title(), command.category(),
+            command.description(), command.type(), command.age(), reward,
+            command.time(), command.image(), command.theme(),
+            command.assignedDate(), null
+        );
+        return questRepository.save(quest).getId();
+    }
 
-            var quest = new Quest(
-                command.minimageId(),
-                command.title(),
-                command.category(),
-                command.description(),
-                command.type(),
-                command.age(),
-                command.reward_gems(),
-                command.reward_ecopoints(),
-                command.time(),
-                command.image(),
-                command.theme(),
-                command.assignedDate()
-            );
+    @Override
+    public Optional<Quest> handle(UpdateQuestCommand command) {
+        var result = questRepository.findById(command.questId());
+        if (result.isEmpty()) return Optional.empty();
+        var quest = result.get();
+        quest.updateInformation(
+            command.title(), command.description(), command.category(),
+            command.type(), command.age(), new Reward(command.rewardGems(), command.rewardEcopoints()),
+            command.time(), command.image(), command.theme(),
+            command.assignedDate(), command.expirationDate()
+        );
+        return Optional.of(questRepository.save(quest));
+    }
 
-            return Result.success(questRepository.save(quest));
-        } catch (IllegalArgumentException e) {
-            return Result.failure(
-                    ApplicationError.validationError("Quest", e.getMessage())
-            );
-        } catch (Exception e) {
-            return Result.failure(
-                    ApplicationError.unexpected("Quest creation", e.getMessage())
-            );
-        }
+    @Override
+    public void handle(DeleteQuestCommand command) {
+        if (!questRepository.existsById(command.questId()))
+            throw new IllegalArgumentException("Quest with id " + command.questId() + " not found");
+        questRepository.deleteById(command.questId());
     }
 }

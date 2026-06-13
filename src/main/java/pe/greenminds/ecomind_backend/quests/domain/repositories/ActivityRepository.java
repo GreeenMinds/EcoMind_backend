@@ -1,18 +1,14 @@
 package pe.greenminds.ecomind_backend.quests.domain.repositories;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.Activity;
 
 import java.util.List;
-import java.util.Optional;
 
-public interface ActivityRepository {
-    Optional<Activity> findById(Long id);
-    List<Activity> findByQuestsIdOrderByOrderAsc(Long questId);
-
-    boolean existsByQuestIdAndOrder(Long questId, Integer order);
-
-    Activity save(Activity activity);
-    void deleteById(Long id);
-
+@Repository
+public interface ActivityRepository extends JpaRepository<Activity, Long> {
+    List<Activity> findByQuestIdOrderByPositionAsc(Long questId);
+    boolean existsByQuestIdAndPosition(Long questId, Integer position);
     Integer countByQuestId(Long questId);
 }

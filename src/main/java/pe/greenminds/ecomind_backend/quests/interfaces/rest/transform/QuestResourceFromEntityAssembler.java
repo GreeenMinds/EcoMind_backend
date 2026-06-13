@@ -8,8 +8,6 @@ public class QuestResourceFromEntityAssembler {
     private QuestResourceFromEntityAssembler() {}
 
     public static QuestResource toResourceFromEntity(Quest quest) {
-        var reward = quest.getReward();
-
         return new QuestResource(
                 quest.getId(),
                 quest.getMinigameId(),
@@ -17,12 +15,13 @@ public class QuestResourceFromEntityAssembler {
                 quest.getDescription(),
                 quest.getCategory(),
                 quest.getType(),
-                reward.gems(),
-                reward.ecopoints(),
+                quest.getGems(),
+                quest.getEcopoints(),
                 quest.getAge(),
                 quest.getTime(),
                 quest.getTheme(),
                 quest.getAssignedDate(),
+                quest.getExpirationDate(),
                 quest.getImage()
         );
     }

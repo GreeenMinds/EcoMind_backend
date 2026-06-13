@@ -1,34 +1,33 @@
 package pe.greenminds.ecomind_backend.quests.interfaces.rest;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import pe.greenminds.ecomind_backend.quests.application.commandservices.ActivityCommandService;
-import pe.greenminds.ecomind_backend.quests.application.queryservices.ActivityQueryService;
+import pe.greenminds.ecomind_backend.quests.domain.model.commands.DeleteActivityCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.queries.GetActivitiesByQuestIdQuery;
 import pe.greenminds.ecomind_backend.quests.domain.model.queries.GetActivityByIdQuery;
+import pe.greenminds.ecomind_backend.quests.domain.model.queries.GetAllActivitiesQuery;
+import pe.greenminds.ecomind_backend.quests.domain.services.ActivityCommandService;
+import pe.greenminds.ecomind_backend.quests.domain.services.ActivityQueryService;
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.resources.ActivityResource;
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.resources.CreateActivityResource;
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.transform.ActivityResourceFromEntityAssembler;
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.transform.CreateActivityCommandFromResourceAssembler;
-import pe.greenminds.ecomind_backend.quests.interfaces.rest.transform.QuestResourceFromEntityAssembler;
-import pe.greenminds.ecomind_backend.shared.application.result.ApplicationError;
-import pe.greenminds.ecomind_backend.shared.interfaces.rest.transform.ErrorResponseAssembler;
-import pe.greenminds.ecomind_backend.shared.interfaces.rest.transform.ResponseEntityAssembler;
+import pe.greenminds.ecomind_backend.quests.interfaces.rest.transform.UpdateActivityCommandFromResourceAssembler;
+import pe.greenminds.ecomind_backend.shared.interfaces.rest.resources.MessageResource;
 
 import java.util.List;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
+@CrossOrigin(origins = "*",
+        methods = {RequestMethod.POST, RequestMethod.GET,
+                RequestMethod.PUT, RequestMethod.DELETE})
 @RestController
-@RequestMapping(value = "/api/v1/activities", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name="Activities", description = "Activity management endpoints")
+@RequestMapping(value = "/api/v1/activities", produces = APPLICATION_JSON_VALUE)
+@Tag(name = "Activities", description = "Activity Management Endpoints")
 public class ActivityController {
     private final ActivityCommandService activityCommandService;
     private final ActivityQueryService activityQueryService;
@@ -39,78 +38,63 @@ public class ActivityController {
     }
 
     @PostMapping
-    @Operation(
-            summary="Create a new activity",
-            description="Creates a new activity linked to a quest"
-    )
-    @ApiResponses(value={
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "Activity created succesfully",
-                    content = @Content(schema = @Schema(implementation = ActivityResource.class))
-            ),
-            @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "409", description = "Conflict: activity already exists")
-    })
-    public ResponseEntity<?> createActivity(@Valid @RequestBody CreateActivityResource resource) {
+    public ResponseEntity<ActivityResource> createActivity(@Valid @RequestBody CreateActivityResource resource) {
         var createActivityCommand = CreateActivityCommandFromResourceAssembler.toCommandFromResource(resource);
-        var result = activityCommandService.handle(createActivityCommand);
+        var activityId = activityCommandService.handle(createActivityCommand);
+        var getActivityByIdQuery = new GetActivityByIdQuery(activityId);
+        var activity = activityQueryService.handle(getActivityByIdQuery);
+        if (activity.isPresent()) {
+            var activityResource = ActivityResourceFromEntityAssembler.toResourceFromEntity(activity.get());
+            return new ResponseEntity<>(activityResource, HttpStatus.CREATED);
+        }
+        return ResponseEntity.badRequest().build();
+    }
 
-        return ResponseEntityAssembler.toResponseEntityFromResult(
-                result,
-                ActivityResourceFromEntityAssembler::toResourceFromEntity,
-                HttpStatus.CREATED
-        );
+    @GetMapping
+    public ResponseEntity<List<ActivityResource>> getAllActivities() {
+        var getAllActivitiesQuery = new GetAllActivitiesQuery();
+        var activities = activityQueryService.handle(getAllActivitiesQuery);
+        var activityResources = activities.stream()
+                .map(ActivityResourceFromEntityAssembler::toResourceFromEntity)
+                .toList();
+        return ResponseEntity.ok(activityResources);
     }
 
     @GetMapping("/{activityId}")
-    @Operation(
-            summary = "Get activity by Id",
-            description = "Retrieve an activity using it's uniques identifier,"
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Activity found",
-                    content = @Content(
-                            schema = @Schema(implementation = ActivityResource.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Activity not found"
-            )
-    })
-    public ResponseEntity<?> getActivityById(@PathVariable Long activityId) {
-        var activity  = activityQueryService.handle(
-                new GetActivityByIdQuery(activityId)
-        );
-        if(activity.isEmpty()){
-            var error = ApplicationError.notFound(
-                    "Activity",
-                    activityId.toString()
-            );
-            return ErrorResponseAssembler.toErrorResponseFromApplicationError(error);
+    public ResponseEntity<ActivityResource> getActivityById(@PathVariable Long activityId) {
+        var getActivityByIdQuery = new GetActivityByIdQuery(activityId);
+        var activity = activityQueryService.handle(getActivityByIdQuery);
+        if (activity.isPresent()) {
+            var activityResource = ActivityResourceFromEntityAssembler.toResourceFromEntity(activity.get());
+            return ResponseEntity.ok(activityResource);
         }
-        var resource = ActivityResourceFromEntityAssembler.toResourceFromEntity(activity.get());
-        return ResponseEntity.ok(resource);
+        return ResponseEntity.notFound().build();
     }
 
     @GetMapping("/quest/{questId}")
-    @Operation(
-            summary = "Get all activities from one quest",
-            description = "Retrieves all available activities in a quest."
-    )
-    @ApiResponse(
-            responseCode = "200",
-            description = "Activities retrieved succesfully."
-    )
     public ResponseEntity<List<ActivityResource>> getActivitiesByQuestId(@PathVariable Long questId) {
-        var activities  = activityQueryService.handle(new GetActivitiesByQuestIdQuery(questId));
-
-        var resources = activities.stream()
+        var getActivitiesByQuestIdQuery = new GetActivitiesByQuestIdQuery(questId);
+        var activities = activityQueryService.handle(getActivitiesByQuestIdQuery);
+        var activityResources = activities.stream()
                 .map(ActivityResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
-        return ResponseEntity.ok(resources);
+        return ResponseEntity.ok(activityResources);
+    }
+
+    @PutMapping("/{activityId}")
+    public ResponseEntity<ActivityResource> updateActivity(@PathVariable Long activityId, @Valid @RequestBody ActivityResource resource) {
+        var updateActivityCommand = UpdateActivityCommandFromResourceAssembler.toCommandFromResource(activityId, resource);
+        var activity = activityCommandService.handle(updateActivityCommand);
+        if (activity.isPresent()) {
+            var activityResource = ActivityResourceFromEntityAssembler.toResourceFromEntity(activity.get());
+            return ResponseEntity.ok(activityResource);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping("/{activityId}")
+    public ResponseEntity<MessageResource> deleteActivity(@PathVariable Long activityId) {
+        activityCommandService.handle(new DeleteActivityCommand(activityId));
+        return ResponseEntity.ok(new MessageResource("Activity with id " + activityId + " deleted successfully"));
     }
 }

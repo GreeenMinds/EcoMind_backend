@@ -7,35 +7,13 @@ import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.ActivityTy
 
 @Schema(
         name = "CreateActivityRequest",
-        description = "Request payload for creating a new activity",
-        example = """
-        {
-              "questId": 1,
-              "description": "Check the rooms",
-              "order": 1,
-              "type": "CHECKBOX",
-              "image_url": null
-        }
-        """
+        description = "Request payload for creating a new activity"
 )
 public record CreateActivityResource(
-        @NotNull
-        @Schema(description = "Quest where the activity exists")
-        Long questId,
-
-        @Schema(description = "Activity instructions")
-        String description,
-
-        @NotNull
-        @Positive
-        @Schema(description = "Number of order of the activity")
-        Integer order,
-
-        @NotNull
-        @Schema(description = "Type of activity")
-        ActivityType type,
-
-        @Schema(description = "Image url for individual activity")
-        String image
+        @NotNull @Schema(description = "Quest where the activity exists") Long questId,
+        @Schema(description = "Activity instructions") String description,
+        @NotNull @Positive @Schema(description = "Position order of the activity") Integer position,
+        @NotNull @Schema(description = "Type of activity") ActivityType type,
+        @Schema(description = "Image url for individual activity") String image
 ) {
 }

@@ -6,13 +6,11 @@ import pe.greenminds.ecomind_backend.quests.interfaces.rest.resources.CreateActi
 public class CreateActivityCommandFromResourceAssembler {
     private CreateActivityCommandFromResourceAssembler() {}
 
-    public static CreateActivityCommand toCommandFromResource(
-            CreateActivityResource resource
-    ){
+    public static CreateActivityCommand toCommandFromResource(CreateActivityResource resource) {
         return new CreateActivityCommand(
                 resource.questId(),
                 resource.description(),
-                resource.order(),
+                resource.position(),
                 resource.type(),
                 resource.image()
         );

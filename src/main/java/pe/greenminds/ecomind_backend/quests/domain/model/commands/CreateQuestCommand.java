@@ -8,14 +8,14 @@ import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Theme;
 import java.time.LocalDate;
 
 public record CreateQuestCommand (
-        Long minimageId,
+        Long minigameId,
         Category category,
         String title,
         String description,
         String image,
         QuestType type,
-        Integer reward_gems,
-        Integer reward_ecopoints,
+        Integer rewardGems,
+        Integer rewardEcopoints,
         Integer time,
         Theme theme,
         Integer age,

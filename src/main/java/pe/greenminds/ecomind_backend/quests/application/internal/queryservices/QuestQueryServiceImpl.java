@@ -1,12 +1,12 @@
 package pe.greenminds.ecomind_backend.quests.application.internal.queryservices;
 
 import org.springframework.stereotype.Service;
-import pe.greenminds.ecomind_backend.quests.application.queryservices.QuestQueryService;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.Quest;
 import pe.greenminds.ecomind_backend.quests.domain.model.queries.GetAllQuestsQuery;
 import pe.greenminds.ecomind_backend.quests.domain.model.queries.GetQuestByIdQuery;
 import pe.greenminds.ecomind_backend.quests.domain.model.queries.SearchQuestQuery;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestRepository;
+import pe.greenminds.ecomind_backend.quests.domain.services.QuestQueryService;
 
 import java.util.List;
 import java.util.Optional;

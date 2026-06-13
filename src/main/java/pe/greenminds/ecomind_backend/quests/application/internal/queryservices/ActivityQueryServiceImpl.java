@@ -1,11 +1,12 @@
 package pe.greenminds.ecomind_backend.quests.application.internal.queryservices;
 
 import org.springframework.stereotype.Service;
-import pe.greenminds.ecomind_backend.quests.application.queryservices.ActivityQueryService;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.Activity;
 import pe.greenminds.ecomind_backend.quests.domain.model.queries.GetActivitiesByQuestIdQuery;
 import pe.greenminds.ecomind_backend.quests.domain.model.queries.GetActivityByIdQuery;
+import pe.greenminds.ecomind_backend.quests.domain.model.queries.GetAllActivitiesQuery;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.ActivityRepository;
+import pe.greenminds.ecomind_backend.quests.domain.services.ActivityQueryService;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,12 +20,17 @@ public class ActivityQueryServiceImpl implements ActivityQueryService {
     }
 
     @Override
-    public Optional<Activity> handle(GetActivityByIdQuery query){
+    public Optional<Activity> handle(GetActivityByIdQuery query) {
         return activityRepository.findById(query.id());
     }
 
     @Override
-    public List<Activity> handle(GetActivitiesByQuestIdQuery query){
-        return activityRepository.findByQuestsIdOrderByOrderAsc(query.questId());
+    public List<Activity> handle(GetAllActivitiesQuery query) {
+        return activityRepository.findAll();
+    }
+
+    @Override
+    public List<Activity> handle(GetActivitiesByQuestIdQuery query) {
+        return activityRepository.findByQuestIdOrderByPositionAsc(query.questId());
     }
 }
