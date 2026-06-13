@@ -29,8 +29,11 @@ public class EventRepositoryImpl implements EventRepository {
 
     @Override
     public List<Event> search(Long communityId, Long authorId, String name, LocalDate date, String location) {
+        var nameFilter = name == null ? "" : name;
+        var locationFilter = location == null ? "" : location;
+
         return eventPersistenceRepository
-                .search(communityId, authorId, name, date, location)
+                .search(communityId, authorId, nameFilter, date, locationFilter)
                 .stream()
                 .map(EventPersistenceAssembler::toDomainFromPersistence)
                 .toList();
