@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Category;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Theme;
 import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.entities.QuestPersistenceEntity;
 
 import java.util.List;
@@ -14,17 +15,19 @@ import java.util.List;
 @Repository
 public interface QuestPersistenceRepository extends JpaRepository<QuestPersistenceEntity, Long> {
     @Query("""
-        SELECT q FROM QuestPersistenceEntity q
-        WHERE (:title IS NULL
-               OR LOWER(q.title) LIKE LOWER(CONCAT('%', :title, '%')))
-          AND (:category IS NULL OR q.category = :category)
-          AND (:questType IS NULL OR q.questType = :questType)
-          AND (:age IS NULL OR q.age <= :age)
+    SELECT q FROM QuestPersistenceEntity q
+    WHERE (:title = '' OR LOWER(q.title)
+           LIKE LOWER(CONCAT('%', :title, '%')))
+      AND (:category IS NULL OR q.category = :category)
+      AND (:questType IS NULL OR q.questType = :questType)
+      AND (:theme IS NULL OR q.theme= :theme)
+      AND (:age IS NULL OR q.age <= :age)
     """)
     List<QuestPersistenceEntity> search(
             @Param("title") String title,
             @Param("category") Category category,
             @Param("questType") QuestType questType,
-            @Param("age") Integer age
+            @Param("age") Integer age,
+            @Param("theme") Theme theme
     );
 }

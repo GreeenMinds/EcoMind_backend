@@ -1,6 +1,5 @@
 package pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.entities;
 import jakarta.persistence.*;
-import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Reward;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Category;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Theme;
