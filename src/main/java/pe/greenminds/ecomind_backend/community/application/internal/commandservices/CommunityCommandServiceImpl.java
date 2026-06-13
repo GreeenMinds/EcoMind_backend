@@ -23,7 +23,6 @@ public class CommunityCommandServiceImpl implements CommunityCommandService {
         try{
             var community = new Community(
                     command.name(),
-                    command.userCount(),
                     command.location()
             );
             return Result.success(communityRepository.save(community));

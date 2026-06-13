@@ -23,6 +23,7 @@ public class Community extends AbstractDomainAggregateRoot<Community> {
     public Community(String name, int userCount, String location) {
         this(null, name, userCount, location);
     }
+    public Community(String name, String location) {this(null, name, 0, location);}
 
     public String getName() {
         return name;

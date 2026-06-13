@@ -25,11 +25,8 @@ public class CommunityRepositoryImpl implements CommunityRepository {
 
     @Override
     public List<Community> search(String name, String location){
-        var nameFilter = name == null ? "" : name;
-        var locationFilter = location == null ? "" : location;
-
         return communityPersistenceRepository
-                .search(nameFilter, locationFilter)
+                .search(name, location)
                 .stream()
                 .map(CommunityPersistenceAssembler::toDomainFromPersistence)
                 .toList();

@@ -11,11 +11,12 @@ import java.util.List;
 @Repository
 public interface CommunityPersistenceRepository extends JpaRepository<CommunityPersistenceEntity, Long> {
     @Query("""
-        SELECT c FROM CommunityPersistenceEntity c
-        WHERE (:name IS NULL
-               OR LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%')))
-          AND (:location IS NULL OR c.location = :location)
-    """)
+    SELECT c FROM CommunityPersistenceEntity c
+    WHERE (:name IS NULL
+           OR LOWER(c.name) LIKE LOWER(CONCAT('%', CAST(:name AS string), '%')))
+      AND (:location IS NULL
+           OR LOWER(c.location) LIKE LOWER(CONCAT('%', CAST(:location AS string), '%')))
+""")
     List<CommunityPersistenceEntity> search(
             @Param("name") String name,
             @Param("location") String location
