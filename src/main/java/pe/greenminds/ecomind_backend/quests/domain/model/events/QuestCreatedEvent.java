@@ -3,6 +3,7 @@ package pe.greenminds.ecomind_backend.quests.domain.model.events;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.Quest;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Category;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Theme;
 
 public record QuestCreatedEvent(
         Long questId,
@@ -15,7 +16,7 @@ public record QuestCreatedEvent(
         Integer reward_gems,
         Integer reward_ecopoints,
         Integer time,
-        String theme
+        Theme theme
 ) {
     public static QuestCreatedEvent from(Quest quest) {
         var reward = quest.getReward();
@@ -31,6 +32,6 @@ public record QuestCreatedEvent(
                 reward.ecopoints(),
                 quest.getTime(),
                 quest.getTheme()
-        )
+        );
     }
 }

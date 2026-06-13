@@ -2,9 +2,10 @@ package pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.adap
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Repository;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.Quest;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Category;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestRepository;
 import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.assemblers.QuestPersistenceAssembler;
-import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.entities.QuestPersistenceEntity;
 import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.repositories.QuestPersistenceRepository;
 
 import java.util.List;
@@ -26,8 +27,17 @@ public class QuestRepositoryImpl implements QuestRepository {
     }
 
     @Override
-    public Optional<Quest> findByTitle(String title){
-        return questPersistenceRepository.findByTitle(title).map(QuestPersistenceAssembler::toDomainFromPersistence);
+    public List<Quest> search(
+            String title,
+            Category category,
+            QuestType questType,
+            Integer age
+    ) {
+        return questPersistenceRepository
+                .search(title, category, questType, age)
+                .stream()
+                .map(QuestPersistenceAssembler::toDomainFromPersistence)
+                .toList();
     }
 
     @Override

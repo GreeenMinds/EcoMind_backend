@@ -1,0 +1,12 @@
+package pe.greenminds.ecomind_backend.quests.domain.model.queries;
+
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Category;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
+
+public record SearchQuestQuery(
+        String title,
+        Category category,
+        QuestType questType,
+        Integer age
+) {
+}

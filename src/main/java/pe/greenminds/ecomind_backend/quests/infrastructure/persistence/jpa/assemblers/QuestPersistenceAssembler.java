@@ -20,7 +20,8 @@ public class QuestPersistenceAssembler {
                 toDomainFromPersistence(entity.getReward()),
                 entity.getTime(),
                 entity.getImage(),
-                entity.getTheme()
+                entity.getTheme(),
+                entity.getAssignedDate()
         );
         quest.setId(entity.getId());
         return quest;
@@ -39,6 +40,7 @@ public class QuestPersistenceAssembler {
         entity.setTime(quest.getTime());
         entity.setImage(quest.getImage());
         entity.setTheme(quest.getTheme());
+        entity.setAssignedDate(quest.getAssignedDate());
         return entity;
     }
 

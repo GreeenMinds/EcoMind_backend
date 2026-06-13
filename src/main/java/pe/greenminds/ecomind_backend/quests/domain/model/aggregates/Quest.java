@@ -5,8 +5,10 @@ import pe.greenminds.ecomind_backend.quests.domain.model.events.QuestCreatedEven
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Reward;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Category;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Theme;
 import pe.greenminds.ecomind_backend.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
 
+import java.time.LocalDate;
 import java.util.Objects;
 
 public class Quest extends AbstractDomainAggregateRoot<Quest>{
@@ -25,11 +27,12 @@ public class Quest extends AbstractDomainAggregateRoot<Quest>{
     private Integer age;
     private Integer time;
     private String image;
-    private String theme;
+    private Theme theme;
+    private LocalDate assignedDate;
 
 
     public Quest(Long id, Long minigame_id, String title, Category category,
-                 String description, QuestType type, Integer age,Reward reward, Integer time, String image, String theme) {
+                 String description, QuestType type, Integer age,Reward reward, Integer time, String image, Theme theme, LocalDate assignedDate) {
         this.id = id;
         this.minigameId = minigame_id;
         this.title = Objects.requireNonNull(title, "title must not be null");
@@ -40,19 +43,20 @@ public class Quest extends AbstractDomainAggregateRoot<Quest>{
         this.time = time;
         this.image = image;
         this.age = age;
-        this.theme = theme;
+        this.theme = Objects.requireNonNull(theme, "theme must not be null");
+        this.assignedDate = assignedDate;
     }
 
     public Quest(Long minigame_id, String title, Category category,
-                 String description, QuestType type, Integer age,Reward reward, Integer time, String image,  String theme) {
+                 String description, QuestType type, Integer age,Reward reward, Integer time, String image,  Theme theme, LocalDate assignedDate) {
 
-        this(null, minigame_id, title, category, description, type, age, reward, time, image, theme);
+        this(null, minigame_id, title, category, description, type, age, reward, time, image, theme,  assignedDate);
     }
 
     public Quest(Long minigame_id, String title, Category category,
-                 String description, QuestType type, Integer age, Integer gems, Integer ecopoints, Integer time, String image, String theme) {
+                 String description, QuestType type, Integer age, Integer gems, Integer ecopoints, Integer time, String image, Theme theme, LocalDate assignedDate) {
 
-        this(null, minigame_id, title, category, description, type, age, new Reward(gems, ecopoints), time, image, theme);
+        this(null, minigame_id, title, category, description, type, age, new Reward(gems, ecopoints), time, image, theme,  assignedDate);
     }
 
     public Integer getGems() {return reward.gems();}
@@ -66,7 +70,8 @@ public class Quest extends AbstractDomainAggregateRoot<Quest>{
     public Integer getAge() {return age;}
     public Long getMinigameId() {return minigameId;}
     public String getImage() {return image;}
-    public String getTheme() {return theme;}
+    public Theme getTheme() {return theme;}
+    public LocalDate getAssignedDate() {return assignedDate;}
 
     public Reward getRewardValue() {
         return reward;

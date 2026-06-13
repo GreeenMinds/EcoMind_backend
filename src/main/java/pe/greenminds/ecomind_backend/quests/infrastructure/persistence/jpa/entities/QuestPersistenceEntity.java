@@ -3,8 +3,11 @@ import jakarta.persistence.*;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Reward;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Category;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Theme;
 import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.embedddables.RewardPersistenceEmbeddable;
 import pe.greenminds.ecomind_backend.shared.infrastructure.persistence.jpa.entities.AuditableAbstractPersistenceEntity;
+
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "quests")
@@ -42,8 +45,12 @@ public class QuestPersistenceEntity extends AuditableAbstractPersistenceEntity {
     @Column(name = "image_url", length = 255)
     private String image;
 
-    @Column(name="theme")
-    private String theme;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, name="theme")
+    private Theme theme;
+
+    @Column(name="assignedDate")
+    private LocalDate assignedDate;
 
     public RewardPersistenceEmbeddable getReward() {
         return reward;
@@ -80,8 +87,11 @@ public class QuestPersistenceEntity extends AuditableAbstractPersistenceEntity {
     public String getImage() {
         return image;
     }
-    public String getTheme() {
+    public Theme getTheme() {
         return theme;
+    }
+    public LocalDate getAssignedDate() {
+        return assignedDate;
     }
 
     public void setMinigameId(Long minigameId) {
@@ -120,7 +130,12 @@ public class QuestPersistenceEntity extends AuditableAbstractPersistenceEntity {
         this.image = image;
     }
 
-    public void setTheme(String theme) {
+    public void setTheme(Theme theme) {
         this.theme = theme;
     }
+
+    public void setAssignedDate(LocalDate assignedDate) {
+        this.assignedDate = assignedDate;
+    }
+
 }
