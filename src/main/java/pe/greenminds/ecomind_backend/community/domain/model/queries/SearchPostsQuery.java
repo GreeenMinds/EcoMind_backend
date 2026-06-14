@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 public record SearchPostsQuery(
         Long communityId,
         Long userId,
-        String content,
-        LocalDateTime createdAt
+        String content
 ) {
 }

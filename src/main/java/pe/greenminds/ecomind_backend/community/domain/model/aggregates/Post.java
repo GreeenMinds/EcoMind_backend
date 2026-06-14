@@ -31,6 +31,10 @@ public class Post extends AbstractDomainAggregateRoot<Post> {
         this.createdAt = createdAt;
     }
 
+    public Post(Long communityId, Long userId, String content, Integer points, Integer likes, String imageUrl, LocalDateTime createdAt) {
+        this(null, communityId, userId, content, points, likes, imageUrl, createdAt);
+    }
+    
     public Post(Long communityId, Long userId, String content, Integer points, String imageUrl) {
         this(null, communityId, userId, content, points, 0, imageUrl, null);
     }

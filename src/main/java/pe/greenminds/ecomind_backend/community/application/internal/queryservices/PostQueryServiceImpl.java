@@ -21,8 +21,7 @@ public class PostQueryServiceImpl implements PostQueryService {
         return postRepository.search(
                 query.communityId(),
                 query.userId(),
-                query.content(),
-                query.createdAt()
+                query.content()
         );
     }
 }

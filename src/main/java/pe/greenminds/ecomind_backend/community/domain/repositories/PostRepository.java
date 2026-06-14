@@ -12,8 +12,7 @@ public interface PostRepository {
     List<Post> search(
             Long communityId,
             Long userId,
-            String content,
-            LocalDateTime createdAt
+            String content
     );
 
     Post save(Post post);
