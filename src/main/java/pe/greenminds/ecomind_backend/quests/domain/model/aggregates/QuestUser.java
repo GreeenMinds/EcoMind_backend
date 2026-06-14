@@ -1,0 +1,79 @@
+package pe.greenminds.ecomind_backend.quests.domain.model.aggregates;
+
+import lombok.Getter;
+import lombok.Setter;
+import pe.greenminds.ecomind_backend.quests.domain.model.events.QuestUserCreatedEvent;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestStatus;
+import pe.greenminds.ecomind_backend.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
+
+import java.time.LocalDate;
+import java.util.Objects;
+
+public class QuestUser extends AbstractDomainAggregateRoot<QuestUser> {
+    @Getter
+    @Setter
+    private Long id;
+
+    private Long userId;
+    private Long questId;
+    private QuestStatus status;
+    private Double progress;
+    private LocalDate endDate;
+    private Long CollaborativeSessionId;
+
+    public QuestUser(Long id, Long userId, Long questId, Long CollaborativeSessionId) {
+        this.id = id;
+        this.userId = Objects.requireNonNull(userId, "userId is required");
+        this.questId = Objects.requireNonNull(questId, "questId is required");
+        this.status = QuestStatus.IN_PROGRESS;
+        this.progress = 0.0;
+        this.endDate = null;
+        this.CollaborativeSessionId = CollaborativeSessionId;
+    }
+
+    public QuestUser(Long id, Long userId, Long questId, QuestStatus status, Double progress, LocalDate endDate, Long CollaborativeSessionId) {
+        this.id = id;
+        this.userId = Objects.requireNonNull(userId, "userId is required");
+        this.questId = Objects.requireNonNull(questId, "questId is required");
+        this.status = Objects.requireNonNull(status, "status is required");
+        this.progress = Objects.requireNonNull(progress, "progress is required");
+        this.endDate = endDate;
+        this.CollaborativeSessionId = CollaborativeSessionId;
+    }
+
+    public QuestUser(Long userId, Long questId, QuestStatus status, Double progress, LocalDate endDate, Long CollaborativeSessionId){
+        this(null, userId, questId, status, progress, endDate, CollaborativeSessionId);
+    }
+
+    public QuestUser(Long userId, Long questId, Long CollaborativeSessionId){
+        this(null, userId, questId, CollaborativeSessionId);
+    }
+
+    public void onCreated(){
+        registerDomainEvent(QuestUserCreatedEvent.from(this));
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public Long getQuestId() {
+        return questId;
+    }
+
+    public QuestStatus getStatus() {
+        return status;
+    }
+
+    public Double getProgress() {
+        return progress;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public Long getCollaborativeSessionId() {
+        return CollaborativeSessionId;
+    }
+}

@@ -1,0 +1,73 @@
+package pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.adapters;
+
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Repository;
+import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.QuestUser;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestStatus;
+import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestUserRepository;
+import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.assemblers.QuestUserPersistenceAssembler;
+import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.repositories.QuestUserPersistenceRepository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public class QuestUserRepositoryImpl implements QuestUserRepository {
+    private final QuestUserPersistenceRepository questUserPersistenceRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
+
+    public QuestUserRepositoryImpl(
+            QuestUserPersistenceRepository questUserPersistenceRepository,
+            ApplicationEventPublisher applicationEventPublisher
+    ) {
+        this.questUserPersistenceRepository = questUserPersistenceRepository;
+        this.applicationEventPublisher = applicationEventPublisher;
+    }
+
+    @Override
+    public QuestUser save(QuestUser questUser) {
+        boolean isNew = questUser.getId() == null;
+        var savedEntity = questUserPersistenceRepository.save(
+                QuestUserPersistenceAssembler.toPersistenceFromDomain(questUser)
+        );
+        var savedQuestUser = QuestUserPersistenceAssembler.toDomainFromPersistence(savedEntity);
+
+        if (isNew) {
+            savedQuestUser.onCreated();
+            savedQuestUser.domainEvents().forEach(applicationEventPublisher::publishEvent);
+            savedQuestUser.clearDomainEvents();
+        }
+
+        return savedQuestUser;
+    }
+
+    @Override
+    public Optional<QuestUser> findById(Long id) {
+        return questUserPersistenceRepository.findById(id)
+                .map(QuestUserPersistenceAssembler::toDomainFromPersistence);
+    }
+
+    @Override
+    public Optional<QuestUser> findByUserIdAndQuestId(Long userId, Long questId) {
+        return questUserPersistenceRepository.findByUserIdAndQuestId(userId, questId)
+                .map(QuestUserPersistenceAssembler::toDomainFromPersistence);
+    }
+
+    @Override
+    public boolean existsByUserIdAndQuestId(Long userId, Long questId) {
+        return questUserPersistenceRepository.existsByUserIdAndQuestId(userId, questId);
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        questUserPersistenceRepository.deleteById(id);
+    }
+
+    @Override
+    public List<QuestUser> findByUserIdAndStatus(Long userId, QuestStatus questStatus) {
+        return questUserPersistenceRepository.findByUserIdAndStatus(userId, questStatus)
+                .stream()
+                .map(QuestUserPersistenceAssembler::toDomainFromPersistence)
+                .toList();
+    }
+}

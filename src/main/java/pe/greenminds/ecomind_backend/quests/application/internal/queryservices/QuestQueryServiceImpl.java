@@ -36,7 +36,8 @@ public class QuestQueryServiceImpl implements QuestQueryService {
                 query.title(),
                 query.category(),
                 query.questType(),
-                query.age()
+                query.age(),
+                query.type()
         );
     }
 }
