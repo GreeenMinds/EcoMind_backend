@@ -1,0 +1,24 @@
+package pe.greenminds.ecomind_backend.monetization.domain.model.events;
+
+import pe.greenminds.ecomind_backend.monetization.domain.model.aggregates.Cosmetic;
+import pe.greenminds.ecomind_backend.monetization.domain.model.valueobjects.CosmeticType;
+
+public record CosmeticCreatedEvent(
+        Long cosmeticId,
+        String name,
+        String description,
+        Integer price,
+        CosmeticType type,
+        String imageUrl
+) {
+    public static CosmeticCreatedEvent from(Cosmetic cosmetic) {
+        return new CosmeticCreatedEvent(
+                cosmetic.getId(),
+                cosmetic.getName(),
+                cosmetic.getDescription(),
+                cosmetic.getPrice(),
+                cosmetic.getType(),
+                cosmetic.getImageUrl()
+        );
+    }
+}
