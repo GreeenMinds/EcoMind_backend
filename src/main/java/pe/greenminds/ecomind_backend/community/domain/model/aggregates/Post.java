@@ -26,13 +26,13 @@ public class Post extends AbstractDomainAggregateRoot<Post> {
         this.userId = Objects.requireNonNull(userId, "userId must not be null");
         this.content = Objects.requireNonNull(content, "content must not be null");
         this.points = Objects.requireNonNull(points, "points must not be null");
-        this.likes = likes;
+        this.likes = Objects.requireNonNull(likes, "likes must not be null");
         this.imageUrl = imageUrl;
-        this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
+        this.createdAt = createdAt;
     }
 
-    public Post(Long communityId, Long userId, String content, Integer points, String imageUrl, LocalDateTime createdAt) {
-        this(null, communityId, userId, content, points, 0, imageUrl, createdAt);
+    public Post(Long communityId, Long userId, String content, Integer points, String imageUrl) {
+        this(null, communityId, userId, content, points, 0, imageUrl, null);
     }
 
     public Long getCommunityId() { return communityId; }

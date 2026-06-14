@@ -2,7 +2,6 @@ package pe.greenminds.ecomind_backend.community.application.internal.commandserv
 
 import org.springframework.stereotype.Service;
 import pe.greenminds.ecomind_backend.community.application.commandservices.CommunityCommandService;
-import pe.greenminds.ecomind_backend.community.application.commandservices.EventCommandService;
 import pe.greenminds.ecomind_backend.community.domain.model.aggregates.Community;
 import pe.greenminds.ecomind_backend.community.domain.model.commands.CreateCommunityCommand;
 import pe.greenminds.ecomind_backend.community.domain.repositories.CommunityRepository;
