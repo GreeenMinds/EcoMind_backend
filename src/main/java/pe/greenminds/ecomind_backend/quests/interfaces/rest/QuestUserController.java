@@ -21,9 +21,9 @@ import pe.greenminds.ecomind_backend.quests.interfaces.rest.resources.CreateQues
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.resources.QuestUserResource;
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.transform.CreateQuestUserCommandFromResourceAssembler;
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.transform.QuestUserResourceFromEntityAssembler;
-import pe.greenminds.ecomind_backend.shared.application.result.ApplicationError;
-import pe.greenminds.ecomind_backend.shared.interfaces.rest.transform.ErrorResponseAssembler;
-import pe.greenminds.ecomind_backend.shared.interfaces.rest.transform.ResponseEntityAssembler;
+import pe.greenminds.ecomind_backend.shared.domain.model.ApplicationError;
+import pe.greenminds.ecomind_backend.quests.interfaces.rest.transform.ErrorResponseAssembler;
+import pe.greenminds.ecomind_backend.quests.interfaces.rest.transform.ResponseEntityAssembler;
 
 import java.util.List;
 

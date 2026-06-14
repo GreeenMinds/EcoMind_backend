@@ -4,32 +4,22 @@ import org.springframework.stereotype.Service;
 import pe.greenminds.ecomind_backend.quests.application.commandservices.QuestUserCommandService;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.QuestUser;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.CreateQuestUserCommand;
-import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestUserRepository;
-import pe.greenminds.ecomind_backend.shared.application.result.ApplicationError;
-import pe.greenminds.ecomind_backend.shared.application.result.Result;
+import pe.greenminds.ecomind_backend.shared.domain.model.ApplicationError;
+import pe.greenminds.ecomind_backend.shared.domain.model.Result;
 
 @Service
 public class QuestUserCommandServiceImpl implements QuestUserCommandService {
     private final QuestUserRepository questUserRepository;
-    private final QuestRepository questRepository;
 
     public QuestUserCommandServiceImpl(
-            QuestUserRepository questUserRepository,
-            QuestRepository questRepository
+            QuestUserRepository questUserRepository
     ) {
         this.questUserRepository = questUserRepository;
-        this.questRepository = questRepository;
     }
 
     @Override
     public Result<QuestUser, ApplicationError> handle(CreateQuestUserCommand command) {
-        if (!questRepository.existsById(command.questId())) {
-            return Result.failure(
-                    ApplicationError.notFound("Quest", command.questId().toString())
-            );
-        }
-
         if (questUserRepository.existsByUserIdAndQuestId(command.userId(), command.questId())) {
             return Result.failure(
                     ApplicationError.conflict(

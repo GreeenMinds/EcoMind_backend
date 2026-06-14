@@ -3,7 +3,6 @@ package pe.greenminds.ecomind_backend.quests.domain.model.aggregates;
 import lombok.Getter;
 import lombok.Setter;
 import pe.greenminds.ecomind_backend.quests.domain.model.events.ActivityCreatedEvent;
-import pe.greenminds.ecomind_backend.quests.domain.model.events.QuestCreatedEvent;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.ActivityType;
 import pe.greenminds.ecomind_backend.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
 
@@ -46,7 +45,7 @@ public class Activity extends AbstractDomainAggregateRoot {
     }
 
     public void onCreated() {
-        registerDomainEvent(ActivityCreatedEvent.from(this));
+        registerEvent(ActivityCreatedEvent.from(this));
     }
 
     public Long getQuestId() {

@@ -3,7 +3,7 @@ package pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.enti
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Positive;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.ActivityType;
-import pe.greenminds.ecomind_backend.shared.infrastructure.persistence.jpa.entities.AuditableAbstractPersistenceEntity;
+import pe.greenminds.ecomind_backend.shared.infrastructure.persistence.jpa.AuditableAbstractPersistenceEntity;
 
 @Entity
 @Table(name="activities")

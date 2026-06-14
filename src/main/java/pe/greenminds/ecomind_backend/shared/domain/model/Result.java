@@ -16,8 +16,16 @@ public class Result<T, E> {
         return new Result<>(data, null);
     }
 
+    public static <T, E> Result<T, E> success(T data) {
+        return ok(data);
+    }
+
     public static <T, E> Result<T, E> error(E error) {
         return new Result<>(null, error);
+    }
+
+    public static <T, E> Result<T, E> failure(E error) {
+        return error(error);
     }
 
     public boolean isSuccess() { return data != null; }
