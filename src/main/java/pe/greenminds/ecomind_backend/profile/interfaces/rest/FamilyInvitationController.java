@@ -1,5 +1,7 @@
 package pe.greenminds.ecomind_backend.profile.interfaces.rest;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,6 +24,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/v1/family_invitation", produces = MediaType.APPLICATION_JSON_VALUE)
+@Tag(name = "Family Invitations", description = "Family invitation endpoints")
 public class FamilyInvitationController {
     private final FamilyInvitationCommandService commandService;
     private final FamilyInvitationQueryService queryService;
@@ -33,6 +36,7 @@ public class FamilyInvitationController {
     }
 
     @GetMapping
+    @Operation(summary = "Get family invitations", description = "Retrieve family invitations, or filter them by invited user, inviter user, and status.")
     public ResponseEntity<List<FamilyInvitationResource>> getInvitations(
             @RequestParam(name = "invited_user_id", required = false) Long invitedUserId,
             @RequestParam(name = "inviter_user_id", required = false) Long inviterUserId,
@@ -43,6 +47,7 @@ public class FamilyInvitationController {
     }
 
     @PostMapping
+    @Operation(summary = "Create family invitation", description = "Create a pending invitation for a user to join a family.")
     public ResponseEntity<?> createInvitation(@Valid @RequestBody CreateFamilyInvitationResource resource) {
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 commandService.handle(CreateFamilyInvitationCommandFromResourceAssembler.toCommandFromResource(resource)),
@@ -51,6 +56,7 @@ public class FamilyInvitationController {
     }
 
     @PutMapping("/{invitationId}")
+    @Operation(summary = "Update family invitation", description = "Update the family invitation data and status.")
     public ResponseEntity<?> updateInvitation(@PathVariable Long invitationId,
                                               @Valid @RequestBody UpdateFamilyInvitationResource resource) {
         return ResponseEntityAssembler.toResponseEntityFromResult(
@@ -60,6 +66,7 @@ public class FamilyInvitationController {
     }
 
     @PatchMapping("/{invitationId}/accept")
+    @Operation(summary = "Accept family invitation", description = "Accept a pending family invitation and automatically create the corresponding family membership.")
     public ResponseEntity<?> acceptInvitation(@PathVariable Long invitationId,
                                               @RequestParam(name = "user_id", required = false) Long userId) {
         return ResponseEntityAssembler.toResponseEntityFromResult(
@@ -69,6 +76,7 @@ public class FamilyInvitationController {
     }
 
     @PatchMapping("/{invitationId}/reject")
+    @Operation(summary = "Reject family invitation", description = "Reject a pending family invitation.")
     public ResponseEntity<?> rejectInvitation(@PathVariable Long invitationId) {
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 commandService.handle(new RejectFamilyInvitationCommand(invitationId)),
@@ -77,6 +85,7 @@ public class FamilyInvitationController {
     }
 
     @DeleteMapping("/{invitationId}")
+    @Operation(summary = "Delete family invitation", description = "Delete a family invitation.")
     public ResponseEntity<?> deleteInvitation(@PathVariable Long invitationId) {
         var result = commandService.handle(new DeleteFamilyInvitationCommand(invitationId));
         return switch (result) {

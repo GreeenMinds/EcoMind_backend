@@ -1,5 +1,7 @@
 package pe.greenminds.ecomind_backend.profile.interfaces.rest;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,6 +25,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/v1/family", produces = MediaType.APPLICATION_JSON_VALUE)
+@Tag(name = "Families", description = "Family profile management endpoints")
 public class FamilyController {
     private final FamilyCommandService commandService;
     private final FamilyQueryService queryService;
@@ -33,12 +36,14 @@ public class FamilyController {
     }
 
     @GetMapping
+    @Operation(summary = "Get all families", description = "Retrieve every family profile.")
     public ResponseEntity<List<FamilyResource>> getAllFamilies() {
         return ResponseEntity.ok(queryService.handle(new GetAllFamiliesQuery()).stream()
                 .map(FamilyResourceFromEntityAssembler::toResourceFromEntity).toList());
     }
 
     @GetMapping("/{familyId}")
+    @Operation(summary = "Get family by ID", description = "Retrieve a family profile by its unique identifier.")
     public ResponseEntity<?> getFamilyById(@PathVariable Long familyId) {
         var family = queryService.handle(new GetFamilyByIdQuery(familyId));
         if (family.isEmpty()) return ErrorResponseAssembler.toErrorResponseFromApplicationError(ApplicationError.notFound("Family", familyId.toString()));
@@ -46,6 +51,7 @@ public class FamilyController {
     }
 
     @PostMapping
+    @Operation(summary = "Create family", description = "Create a new family profile.")
     public ResponseEntity<?> createFamily(@Valid @RequestBody CreateFamilyResource resource) {
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 commandService.handle(CreateFamilyCommandFromResourceAssembler.toCommandFromResource(resource)),
@@ -54,6 +60,7 @@ public class FamilyController {
     }
 
     @PutMapping("/{familyId}")
+    @Operation(summary = "Update family", description = "Update the name and environmental commitment of a family profile.")
     public ResponseEntity<?> updateFamily(@PathVariable Long familyId, @Valid @RequestBody UpdateFamilyResource resource) {
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 commandService.handle(UpdateFamilyCommandFromResourceAssembler.toCommandFromResource(familyId, resource)),
@@ -62,6 +69,7 @@ public class FamilyController {
     }
 
     @DeleteMapping("/{familyId}")
+    @Operation(summary = "Delete family", description = "Delete a family profile and remove its memberships and invitations.")
     public ResponseEntity<?> deleteFamily(@PathVariable Long familyId) {
         var result = commandService.handle(new DeleteFamilyCommand(familyId));
         return switch (result) {
@@ -71,6 +79,7 @@ public class FamilyController {
     }
 
     @PatchMapping("/{familyId}/commitment")
+    @Operation(summary = "Update family commitment", description = "Update only the environmental commitment of a family profile.")
     public ResponseEntity<?> updateCommitment(@PathVariable Long familyId, @RequestBody CommitmentResource resource) {
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 commandService.handle(new UpdateFamilyCommitmentCommand(familyId, resource.commitment())),

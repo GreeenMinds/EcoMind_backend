@@ -1,5 +1,7 @@
 package pe.greenminds.ecomind_backend.profile.interfaces.rest;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,6 +25,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/v1/user", produces = MediaType.APPLICATION_JSON_VALUE)
+@Tag(name = "Users", description = "User profile management endpoints")
 public class UserController {
     private final UserCommandService commandService;
     private final UserQueryService queryService;
@@ -43,12 +46,14 @@ public class UserController {
     }
 
     @GetMapping
+    @Operation(summary = "Get all users", description = "Retrieve every registered user profile.")
     public ResponseEntity<List<UserResource>> getAllUsers() {
         return ResponseEntity.ok(queryService.handle(new GetAllUsersQuery()).stream()
                 .map(UserResourceFromEntityAssembler::toResourceFromEntity).toList());
     }
 
     @GetMapping("/{userId}")
+    @Operation(summary = "Get user by ID", description = "Retrieve a user profile by its unique identifier.")
     public ResponseEntity<?> getUserById(@PathVariable Long userId) {
         var user = queryService.handle(new GetUserByIdQuery(userId));
         if (user.isEmpty()) return ErrorResponseAssembler.toErrorResponseFromApplicationError(ApplicationError.notFound("User", userId.toString()));
@@ -56,6 +61,7 @@ public class UserController {
     }
 
     @PostMapping
+    @Operation(summary = "Create user", description = "Create a new user profile with personal information and initial stats.")
     public ResponseEntity<?> createUser(@Valid @RequestBody CreateUserResource resource) {
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 commandService.handle(CreateUserCommandFromResourceAssembler.toCommandFromResource(resource)),
@@ -64,6 +70,7 @@ public class UserController {
     }
 
     @PutMapping("/{userId}")
+    @Operation(summary = "Update user", description = "Update all editable information for a user profile.")
     public ResponseEntity<?> updateUser(@PathVariable Long userId, @Valid @RequestBody UpdateUserResource resource) {
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 commandService.handle(UpdateUserCommandFromResourceAssembler.toCommandFromResource(userId, resource)),
@@ -72,6 +79,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{userId}")
+    @Operation(summary = "Delete user", description = "Delete a user profile and remove related family memberships and friendships.")
     public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
         var result = commandService.handle(new DeleteUserCommand(userId));
         return switch (result) {
@@ -80,7 +88,8 @@ public class UserController {
         };
     }
 
-    @PatchMapping("/{userId}/commitment")
+    @PatchMapping({"/{userId}/commitment", "/{userId}/profile/commitment"})
+    @Operation(summary = "Update user commitment", description = "Update only the environmental commitment shown in the user's profile.")
     public ResponseEntity<?> updateCommitment(@PathVariable Long userId, @RequestBody CommitmentResource resource) {
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 commandService.handle(new UpdateUserCommitmentCommand(userId, resource.commitment())),
@@ -89,6 +98,7 @@ public class UserController {
     }
 
     @PatchMapping("/{userId}/stats")
+    @Operation(summary = "Update user stats", description = "Update user progress statistics such as gem balance, ecopoints, streak, or last streak date.")
     public ResponseEntity<?> updateStats(@PathVariable Long userId, @RequestBody UserStatsResource resource) {
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 commandService.handle(new UpdateUserStatsCommand(userId, resource.gemBalance(), resource.ecopoints(),
@@ -98,6 +108,7 @@ public class UserController {
     }
 
     @GetMapping("/{userId}/profile")
+    @Operation(summary = "Get profile summary", description = "Retrieve a complete profile summary including personal data, family, invitations, friends, and equipped cosmetics.")
     public ResponseEntity<?> getProfile(@PathVariable Long userId) {
         var user = queryService.handle(new GetUserByIdQuery(userId));
         if (user.isEmpty()) return ErrorResponseAssembler.toErrorResponseFromApplicationError(ApplicationError.notFound("User", userId.toString()));
