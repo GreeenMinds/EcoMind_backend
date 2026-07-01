@@ -5,6 +5,7 @@ import pe.greenminds.ecomind_backend.monetization.application.queryservices.User
 import pe.greenminds.ecomind_backend.monetization.domain.model.aggregates.UserMultiplier;
 import pe.greenminds.ecomind_backend.monetization.domain.model.queries.GetAllUserMultipliersQuery;
 import pe.greenminds.ecomind_backend.monetization.domain.model.queries.GetUserMultiplierByIdQuery;
+import pe.greenminds.ecomind_backend.monetization.domain.model.queries.GetUserMultipliersByUserIdQuery;
 import pe.greenminds.ecomind_backend.monetization.domain.repositories.UserMultiplierRepository;
 
 import java.util.List;
@@ -27,5 +28,10 @@ public class UserMultiplierQueryServiceImpl implements UserMultiplierQueryServic
     @Override
     public List<UserMultiplier> handle(GetAllUserMultipliersQuery query) {
         return userMultiplierRepository.findAll();
+    }
+
+    @Override
+    public List<UserMultiplier> handle(GetUserMultipliersByUserIdQuery query) {
+        return userMultiplierRepository.findByUserId(query.userId());
     }
 }

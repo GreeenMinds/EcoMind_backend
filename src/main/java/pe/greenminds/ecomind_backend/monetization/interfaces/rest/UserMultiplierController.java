@@ -15,6 +15,7 @@ import pe.greenminds.ecomind_backend.monetization.application.commandservices.Us
 import pe.greenminds.ecomind_backend.monetization.application.queryservices.UserMultiplierQueryService;
 import pe.greenminds.ecomind_backend.monetization.domain.model.queries.GetAllUserMultipliersQuery;
 import pe.greenminds.ecomind_backend.monetization.domain.model.queries.GetUserMultiplierByIdQuery;
+import pe.greenminds.ecomind_backend.monetization.domain.model.queries.GetUserMultipliersByUserIdQuery;
 import pe.greenminds.ecomind_backend.monetization.interfaces.rest.resources.CreateUserMultiplierResource;
 import pe.greenminds.ecomind_backend.monetization.interfaces.rest.resources.UserMultiplierResource;
 import pe.greenminds.ecomind_backend.monetization.interfaces.rest.transform.CreateUserMultiplierCommandFromResourceAssembler;
@@ -74,6 +75,24 @@ public class UserMultiplierController {
     )
     public ResponseEntity<List<UserMultiplierResource>> getAllUserMultipliers() {
         var userMultipliers = userMultiplierQueryService.handle(new GetAllUserMultipliersQuery());
+
+        var resources = userMultipliers.stream()
+                .map(UserMultiplierResourceFromEntityAssembler::toResourceFromEntity)
+                .toList();
+        return ResponseEntity.ok(resources);
+    }
+
+    @GetMapping("/user/{userId}")
+    @Operation(
+            summary = "Get user multipliers by user ID",
+            description = "Retrieves all multiplier activations belonging to a specific user."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "User multipliers retrieved successfully."
+    )
+    public ResponseEntity<List<UserMultiplierResource>> getUserMultipliersByUserId(@PathVariable Long userId) {
+        var userMultipliers = userMultiplierQueryService.handle(new GetUserMultipliersByUserIdQuery(userId));
 
         var resources = userMultipliers.stream()
                 .map(UserMultiplierResourceFromEntityAssembler::toResourceFromEntity)

@@ -8,6 +8,7 @@ import java.util.Optional;
 public interface UserMultiplierRepository {
     Optional<UserMultiplier> findById(Long id);
     List<UserMultiplier> findAll();
+    List<UserMultiplier> findByUserId(Long userId);
     UserMultiplier save(UserMultiplier userMultiplier);
     void deleteById(Long id);
     boolean existsById(Long id);

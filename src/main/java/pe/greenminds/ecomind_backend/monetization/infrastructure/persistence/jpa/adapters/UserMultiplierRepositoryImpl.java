@@ -32,6 +32,11 @@ public class UserMultiplierRepositoryImpl implements UserMultiplierRepository {
     }
 
     @Override
+    public List<UserMultiplier> findByUserId(Long userId) {
+        return userMultiplierPersistenceRepository.findByUserId(userId).stream().map(UserMultiplierPersistenceAssembler::toDomainFromPersistence).toList();
+    }
+
+    @Override
     public UserMultiplier save(UserMultiplier userMultiplier) {
         boolean isNew = userMultiplier.getId() == null;
         var savedEntity = userMultiplierPersistenceRepository.save(UserMultiplierPersistenceAssembler.toPersistenceFromDomain(userMultiplier));
