@@ -28,7 +28,8 @@ public class OpenApiConfiguration {
                                 .name("Apache 2.0")
                                 .url("https://springdoc.org")))
                 .servers(List.of(
-                        new Server().url("http://localhost:8092").description("Servidor de desarrollo local")
+                        new Server().url("http://localhost:8092").description("Desarrollo local"),
+                        new Server().url("https://ecomind-backend-t2nh.onrender.com").description("Producción")
                 ));
     }
 }
