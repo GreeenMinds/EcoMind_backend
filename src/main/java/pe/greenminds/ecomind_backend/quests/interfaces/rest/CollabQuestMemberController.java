@@ -15,10 +15,13 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import pe.greenminds.ecomind_backend.quests.application.commandservices.CollabQuestMemberCommandService;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.AcceptCollabQuestMemberCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.DeclineCollabQuestMemberCommand;
+import pe.greenminds.ecomind_backend.quests.domain.model.commands.LeaveCollabQuestMemberCommand;
+import pe.greenminds.ecomind_backend.quests.domain.model.commands.RemoveCollabQuestMemberCommand;
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.resources.CollabQuestMemberResource;
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.resources.InviteCollabQuestMemberResource;
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.transform.CollabQuestMemberResourceFromEntityAssembler;
@@ -112,6 +115,55 @@ public class CollabQuestMemberController {
     public ResponseEntity<?> decline(@PathVariable Long memberId) {
         var result = collabQuestMemberCommandService.handle(
                 new DeclineCollabQuestMemberCommand(memberId)
+        );
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                CollabQuestMemberResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.OK
+        );
+    }
+
+    @PatchMapping("/{memberId}/leave")
+    @Operation(summary = "Leave a collaborative quest session")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Collaborative quest member left successfully",
+                    content = @Content(schema = @Schema(implementation = CollabQuestMemberResource.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "Member or session not found"),
+            @ApiResponse(responseCode = "422", description = "Member cannot leave")
+    })
+    public ResponseEntity<?> leave(@PathVariable Long memberId) {
+        var result = collabQuestMemberCommandService.handle(
+                new LeaveCollabQuestMemberCommand(memberId)
+        );
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                CollabQuestMemberResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.OK
+        );
+    }
+
+    @PatchMapping("/{memberId}/remove")
+    @Operation(summary = "Remove an invited collaborative quest member")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Collaborative quest member removed successfully",
+                    content = @Content(schema = @Schema(implementation = CollabQuestMemberResource.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "Member or session not found"),
+            @ApiResponse(responseCode = "422", description = "Member cannot be removed")
+    })
+    public ResponseEntity<?> remove(
+            @PathVariable Long memberId,
+            @RequestParam Long ownerUserId
+    ) {
+        var result = collabQuestMemberCommandService.handle(
+                new RemoveCollabQuestMemberCommand(memberId, ownerUserId)
         );
 
         return ResponseEntityAssembler.toResponseEntityFromResult(

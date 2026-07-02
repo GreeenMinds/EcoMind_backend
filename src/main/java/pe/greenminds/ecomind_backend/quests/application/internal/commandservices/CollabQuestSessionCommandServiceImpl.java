@@ -6,6 +6,7 @@ import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.CollabQuestM
 import pe.greenminds.ecomind_backend.quests.application.commandservices.CollabQuestSessionCommandService;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.CollabQuestSession;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.CreateCollabQuestSessionCommand;
+import pe.greenminds.ecomind_backend.quests.domain.model.commands.DeletePendingCollabQuestSessionCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.StartCollabQuestSessionCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabMemberStatus;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
@@ -224,5 +225,49 @@ public class CollabQuestSessionCommandServiceImpl implements CollabQuestSessionC
                     )
             );
         }
+    }
+
+    @Transactional
+    @Override
+    public Result<CollabQuestSession, ApplicationError> handle(
+            DeletePendingCollabQuestSessionCommand command
+    ) {
+        var session = collabQuestSessionRepository.findById(command.sessionId());
+        if (session.isEmpty()) {
+            return Result.failure(
+                    ApplicationError.notFound(
+                            "CollabQuestSession",
+                            command.sessionId().toString()
+                    )
+            );
+        }
+
+        if (!Objects.equals(session.get().getOwnerId(), command.ownerUserId())) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Only the session owner can delete the session",
+                            "User %d is not the owner of session %d".formatted(
+                                    command.ownerUserId(),
+                                    command.sessionId()
+                            )
+                    )
+            );
+        }
+
+        if (session.get().getStatus() != pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabQuestStatus.PENDING) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Only pending sessions can be deleted",
+                            "Session %d is %s".formatted(
+                                    command.sessionId(),
+                                    session.get().getStatus()
+                            )
+                    )
+            );
+        }
+
+        collabQuestMemberRepository.deleteBySessionId(command.sessionId());
+        collabQuestSessionRepository.deleteById(command.sessionId());
+        return Result.success(session.get());
     }
 }

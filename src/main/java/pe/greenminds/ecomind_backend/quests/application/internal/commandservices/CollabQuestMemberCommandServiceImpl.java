@@ -1,5 +1,6 @@
 package pe.greenminds.ecomind_backend.quests.application.internal.commandservices;
 
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import pe.greenminds.ecomind_backend.profile.domain.model.aggregates.Friend;
 import pe.greenminds.ecomind_backend.profile.domain.model.valueobjects.FriendStatus;
@@ -11,11 +12,15 @@ import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.CollabQuestM
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.AcceptCollabQuestMemberCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.DeclineCollabQuestMemberCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.InviteCollabQuestMemberCommand;
+import pe.greenminds.ecomind_backend.quests.domain.model.commands.LeaveCollabQuestMemberCommand;
+import pe.greenminds.ecomind_backend.quests.domain.model.commands.RemoveCollabQuestMemberCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabMemberStatus;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabQuestStatus;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.MemberRole;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestMemberRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestSessionRepository;
+import pe.greenminds.ecomind_backend.quests.domain.repositories.ActivityUserRepository;
+import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestUserRepository;
 import pe.greenminds.ecomind_backend.shared.application.result.ApplicationError;
 import pe.greenminds.ecomind_backend.shared.application.result.Result;
 
@@ -28,19 +33,25 @@ public class CollabQuestMemberCommandServiceImpl implements CollabQuestMemberCom
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
     private final FamilyUserRepository familyUserRepository;
+    private final QuestUserRepository questUserRepository;
+    private final ActivityUserRepository activityUserRepository;
 
     public CollabQuestMemberCommandServiceImpl(
             CollabQuestMemberRepository collabQuestMemberRepository,
             CollabQuestSessionRepository collabQuestSessionRepository,
             UserRepository userRepository,
             FriendRepository friendRepository,
-            FamilyUserRepository familyUserRepository
+            FamilyUserRepository familyUserRepository,
+            QuestUserRepository questUserRepository,
+            ActivityUserRepository activityUserRepository
     ) {
         this.collabQuestMemberRepository = collabQuestMemberRepository;
         this.collabQuestSessionRepository = collabQuestSessionRepository;
         this.userRepository = userRepository;
         this.friendRepository = friendRepository;
         this.familyUserRepository = familyUserRepository;
+        this.questUserRepository = questUserRepository;
+        this.activityUserRepository = activityUserRepository;
     }
 
     @Override
@@ -291,6 +302,156 @@ public class CollabQuestMemberCommandServiceImpl implements CollabQuestMemberCom
                             exception.getMessage()
                     )
             );
+        }
+    }
+
+    @Override
+    @Transactional
+    public Result<CollabQuestMember, ApplicationError> handle(
+            LeaveCollabQuestMemberCommand command
+    ) {
+        var member = collabQuestMemberRepository.findById(command.memberId());
+        if (member == null) {
+            return Result.failure(
+                    ApplicationError.notFound("CollabQuestMember", command.memberId().toString())
+            );
+        }
+
+        var session = collabQuestSessionRepository.findById(member.getSessionId());
+        if (session.isEmpty()) {
+            return Result.failure(
+                    ApplicationError.notFound(
+                            "CollabQuestSession",
+                            member.getSessionId().toString()
+                    )
+            );
+        }
+
+        if (session.get().getStatus() == CollabQuestStatus.PENDING) {
+            if (member.getRole() == MemberRole.OWNER) {
+                return Result.failure(
+                        ApplicationError.businessRuleViolation(
+                                "Owner cannot leave a pending session",
+                                "The owner must delete the pending session instead"
+                        )
+                );
+            }
+
+            member.declineInvite();
+            return Result.success(collabQuestMemberRepository.save(member));
+        }
+
+        if (session.get().getStatus() != CollabQuestStatus.STARTED) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Only pending or started session members can leave",
+                            "Session %d is %s".formatted(
+                                    session.get().getId(),
+                                    session.get().getStatus()
+                            )
+                    )
+            );
+        }
+
+        if (member.getStatus() != CollabMemberStatus.ACCEPTED) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Only accepted members can leave started sessions",
+                            "Member %d is %s".formatted(member.getId(), member.getStatus())
+                    )
+            );
+        }
+
+        member.leaveQuest();
+        var savedMember = collabQuestMemberRepository.save(member);
+        deleteMemberProgress(member.getUserId(), session.get().getQuestId());
+        cancelIfNoAcceptedMembersRemain(session.get().getId());
+
+        return Result.success(savedMember);
+    }
+
+    @Override
+    @Transactional
+    public Result<CollabQuestMember, ApplicationError> handle(
+            RemoveCollabQuestMemberCommand command
+    ) {
+        var member = collabQuestMemberRepository.findById(command.memberId());
+        if (member == null) {
+            return Result.failure(
+                    ApplicationError.notFound("CollabQuestMember", command.memberId().toString())
+            );
+        }
+
+        var session = collabQuestSessionRepository.findById(member.getSessionId());
+        if (session.isEmpty()) {
+            return Result.failure(
+                    ApplicationError.notFound(
+                            "CollabQuestSession",
+                            member.getSessionId().toString()
+                    )
+            );
+        }
+
+        if (!Objects.equals(session.get().getOwnerId(), command.ownerUserId())) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Only the session owner can remove members",
+                            "User %d is not the owner of session %d".formatted(
+                                    command.ownerUserId(),
+                                    session.get().getId()
+                            )
+                    )
+            );
+        }
+
+        if (member.getRole() == MemberRole.OWNER) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Owner cannot remove themselves",
+                            "Delete the pending session instead"
+                    )
+            );
+        }
+
+        if (session.get().getStatus() != CollabQuestStatus.PENDING) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Only pending sessions can remove invited members",
+                            "Session %d is %s".formatted(
+                                    session.get().getId(),
+                                    session.get().getStatus()
+                            )
+                    )
+            );
+        }
+
+        member.declineInvite();
+        return Result.success(collabQuestMemberRepository.save(member));
+    }
+
+    private void deleteMemberProgress(Long userId, Long questId) {
+        var questUser = questUserRepository.findByUserIdAndQuestId(userId, questId);
+        if (questUser.isEmpty()) {
+            return;
+        }
+
+        activityUserRepository.deleteByQuestUserId(questUser.get().getId());
+        questUserRepository.deleteById(questUser.get().getId());
+    }
+
+    private void cancelIfNoAcceptedMembersRemain(Long sessionId) {
+        var acceptedMembers = collabQuestMemberRepository.findBySessionIdAndStatusIn(
+                sessionId,
+                java.util.List.of(CollabMemberStatus.ACCEPTED)
+        );
+        if (!acceptedMembers.isEmpty()) {
+            return;
+        }
+
+        var session = collabQuestSessionRepository.findById(sessionId);
+        if (session.isPresent() && session.get().getStatus() == CollabQuestStatus.STARTED) {
+            session.get().cancel();
+            collabQuestSessionRepository.save(session.get());
         }
     }
 

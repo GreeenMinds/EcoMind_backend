@@ -113,6 +113,10 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
             );
         }
 
+        if (questUser.get().getCollaborativeSessionId() != null) {
+            handleCollaborativeQuestUserDeletion(questUser.get());
+        }
+
         activityUserRepository.deleteByQuestUserId(command.questUserId());
         questUserRepository.deleteById(command.questUserId());
         return Result.success(questUser.get());
@@ -251,6 +255,37 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
                             exception.getMessage()
                     )
             );
+        }
+    }
+
+    private void handleCollaborativeQuestUserDeletion(QuestUser questUser) {
+        var session = collabQuestSessionRepository.findById(
+                questUser.getCollaborativeSessionId()
+        );
+
+        if (session.isEmpty() || session.get().getStatus() != CollabQuestStatus.STARTED) {
+            return;
+        }
+
+        var member = collabQuestMemberRepository.findBySessionIdAndUserId(
+                session.get().getId(),
+                questUser.getUserId()
+        );
+
+        if (member == null || member.getStatus() != CollabMemberStatus.ACCEPTED) {
+            return;
+        }
+
+        member.leaveQuest();
+        collabQuestMemberRepository.save(member);
+
+        var acceptedMembers = collabQuestMemberRepository.findBySessionIdAndStatusIn(
+                session.get().getId(),
+                java.util.List.of(CollabMemberStatus.ACCEPTED)
+        );
+        if (acceptedMembers.isEmpty()) {
+            session.get().cancel();
+            collabQuestSessionRepository.save(session.get());
         }
     }
 }

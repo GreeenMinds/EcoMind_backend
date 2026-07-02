@@ -75,6 +75,15 @@ public class CollabQuestSession extends AbstractDomainAggregateRoot<CollabQuestS
         this.endDate = LocalDate.now();
     }
 
+    public void cancel() {
+        if (this.status != CollabQuestStatus.STARTED) {
+            throw new IllegalStateException("Collaborative quest session must be STARTED");
+        }
+
+        this.status = CollabQuestStatus.CANCELLED;
+        this.endDate = LocalDate.now();
+    }
+
     public CollabQuestSession(Long questId, Long ownerId) {
         this(null, questId, ownerId);
     }

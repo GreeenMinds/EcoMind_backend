@@ -8,11 +8,19 @@ import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabMemb
 import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.entities.CollabQuestMemberPersistenceEntity;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CollabQuestMemberPersistenceRepository
         extends JpaRepository<CollabQuestMemberPersistenceEntity, Long> {
     boolean existsBySessionIdAndUserId(Long sessionId, Long userId);
+
+    Optional<CollabQuestMemberPersistenceEntity> findBySessionIdAndUserId(
+            Long sessionId,
+            Long userId
+    );
+
+    void deleteBySessionId(Long sessionId);
 
     List<CollabQuestMemberPersistenceEntity> findBySessionIdAndStatusIn(
             Long sessionId,

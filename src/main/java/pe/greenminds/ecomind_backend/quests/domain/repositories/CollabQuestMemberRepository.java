@@ -10,6 +10,8 @@ public interface CollabQuestMemberRepository {
     boolean existsById(Long id);
     boolean existsBySessionIdAndUserId(Long sessionId, Long userId);
     CollabQuestMember findById(Long id);
+    CollabQuestMember findBySessionIdAndUserId(Long sessionId, Long userId);
+    void deleteBySessionId(Long sessionId);
     List<CollabQuestMember> findBySessionIdAndStatusIn(
             Long sessionId,
             List<CollabMemberStatus> statuses

@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import pe.greenminds.ecomind_backend.quests.application.commandservices.CollabQuestSessionCommandService;
 import pe.greenminds.ecomind_backend.quests.application.queryservices.CollabQuestSessionQueryService;
+import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.CollabQuestSession;
+import pe.greenminds.ecomind_backend.quests.domain.model.commands.DeletePendingCollabQuestSessionCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.StartCollabQuestSessionCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.queries.GetCollabQuestSessionStateQuery;
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.resources.CollabQuestSessionResource;
@@ -27,6 +30,9 @@ import pe.greenminds.ecomind_backend.quests.interfaces.rest.resources.CreateColl
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.transform.CollabQuestSessionResourceFromEntityAssembler;
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.transform.CollabQuestSessionStateResourceAssembler;
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.transform.CreateCollabQuestSessionCommandFromResourceAssembler;
+import pe.greenminds.ecomind_backend.shared.application.result.ApplicationError;
+import pe.greenminds.ecomind_backend.shared.application.result.Result;
+import pe.greenminds.ecomind_backend.shared.interfaces.rest.transform.ErrorResponseAssembler;
 import pe.greenminds.ecomind_backend.shared.interfaces.rest.transform.ResponseEntityAssembler;
 
 @RestController
@@ -103,6 +109,29 @@ public class CollaborativeQuestController {
                 CollabQuestSessionResourceFromEntityAssembler::toResourceFromEntity,
                 HttpStatus.OK
         );
+    }
+
+    @DeleteMapping("/{sessionId}")
+    @Operation(summary = "Delete a pending collaborative quest session")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Collaborative quest session deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Session not found"),
+            @ApiResponse(responseCode = "422", description = "Session cannot be deleted")
+    })
+    public ResponseEntity<?> deletePendingSession(
+            @PathVariable Long sessionId,
+            @RequestParam Long ownerUserId
+    ) {
+        var result = collabQuestSessionCommandService.handle(
+                new DeletePendingCollabQuestSessionCommand(sessionId, ownerUserId)
+        );
+
+        return switch (result) {
+            case Result.Success<CollabQuestSession, ApplicationError> ignored ->
+                    ResponseEntity.noContent().build();
+            case Result.Failure<CollabQuestSession, ApplicationError> failure ->
+                    ErrorResponseAssembler.toErrorResponseFromApplicationError(failure.error());
+        };
     }
 
     @GetMapping("/state")

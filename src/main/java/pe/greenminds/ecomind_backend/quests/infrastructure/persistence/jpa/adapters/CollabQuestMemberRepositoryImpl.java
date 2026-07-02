@@ -62,6 +62,19 @@ public class CollabQuestMemberRepositoryImpl implements CollabQuestMemberReposit
     }
 
     @Override
+    public CollabQuestMember findBySessionIdAndUserId(Long sessionId, Long userId) {
+        return collabQuestMemberPersistenceRepository
+                .findBySessionIdAndUserId(sessionId, userId)
+                .map(CollabQuestMemberPersistenceAssembler::toDomainFromPersistence)
+                .orElse(null);
+    }
+
+    @Override
+    public void deleteBySessionId(Long sessionId) {
+        collabQuestMemberPersistenceRepository.deleteBySessionId(sessionId);
+    }
+
+    @Override
     public List<CollabQuestMember> findBySessionIdAndStatusIn(
             Long sessionId,
             List<CollabMemberStatus> statuses
