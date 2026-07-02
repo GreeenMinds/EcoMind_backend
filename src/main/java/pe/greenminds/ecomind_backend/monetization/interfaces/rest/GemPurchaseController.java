@@ -16,8 +16,10 @@ import pe.greenminds.ecomind_backend.monetization.application.queryservices.GemP
 import pe.greenminds.ecomind_backend.monetization.domain.model.queries.GetAllGemPurchasesQuery;
 import pe.greenminds.ecomind_backend.monetization.domain.model.queries.GetGemPurchaseByIdQuery;
 import pe.greenminds.ecomind_backend.monetization.domain.model.queries.GetGemPurchasesByUserIdQuery;
+import pe.greenminds.ecomind_backend.monetization.interfaces.rest.resources.CreateGemPurchaseCheckoutResource;
 import pe.greenminds.ecomind_backend.monetization.interfaces.rest.resources.CreateGemPurchaseResource;
 import pe.greenminds.ecomind_backend.monetization.interfaces.rest.resources.GemPurchaseResource;
+import pe.greenminds.ecomind_backend.monetization.interfaces.rest.transform.CreateGemPurchaseCheckoutCommandFromResourceAssembler;
 import pe.greenminds.ecomind_backend.monetization.interfaces.rest.transform.CreateGemPurchaseCommandFromResourceAssembler;
 import pe.greenminds.ecomind_backend.monetization.interfaces.rest.transform.GemPurchaseResourceFromEntityAssembler;
 import pe.greenminds.ecomind_backend.shared.application.result.ApplicationError;
@@ -55,6 +57,30 @@ public class GemPurchaseController {
     })
     public ResponseEntity<?> createGemPurchase(@Valid @RequestBody CreateGemPurchaseResource resource) {
         var command = CreateGemPurchaseCommandFromResourceAssembler.toCommandFromResource(resource);
+        var result = gemPurchaseCommandService.handle(command);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                GemPurchaseResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.CREATED
+        );
+    }
+
+    @PostMapping("/checkout")
+    @Operation(
+            summary = "Start a gem package checkout",
+            description = "Creates a gem purchase in PENDING status. The price is looked up server-side from the GemPackage, never trusted from the client. Meant to be followed by a payment gateway confirmation before the purchase is approved."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Gem purchase checkout started",
+                    content = @Content(schema = @Schema(implementation = GemPurchaseResource.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "Gem package not found")
+    })
+    public ResponseEntity<?> checkoutGemPurchase(@Valid @RequestBody CreateGemPurchaseCheckoutResource resource) {
+        var command = CreateGemPurchaseCheckoutCommandFromResourceAssembler.toCommandFromResource(resource);
         var result = gemPurchaseCommandService.handle(command);
 
         return ResponseEntityAssembler.toResponseEntityFromResult(
