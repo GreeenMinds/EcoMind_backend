@@ -1,28 +1,55 @@
 package pe.greenminds.ecomind_backend.quests.application.internal.commandservices;
 
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.CollabQuestMember;
 import pe.greenminds.ecomind_backend.quests.application.commandservices.CollabQuestSessionCommandService;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.CollabQuestSession;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.CreateCollabQuestSessionCommand;
+import pe.greenminds.ecomind_backend.quests.domain.model.commands.StartCollabQuestSessionCommand;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabMemberStatus;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.MemberRole;
+import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestMemberRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestSessionRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestRepository;
+import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestUserRepository;
+import pe.greenminds.ecomind_backend.quests.domain.repositories.ActivityRepository;
+import pe.greenminds.ecomind_backend.quests.domain.repositories.ActivityUserRepository;
+import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.QuestUser;
+import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.ActivityUser;
 import pe.greenminds.ecomind_backend.shared.application.result.ApplicationError;
 import pe.greenminds.ecomind_backend.shared.application.result.Result;
+
+import java.util.List;
+import java.util.Objects;
 
 @Service
 public class CollabQuestSessionCommandServiceImpl implements CollabQuestSessionCommandService {
     private final CollabQuestSessionRepository collabQuestSessionRepository;
+    private final CollabQuestMemberRepository collabQuestMemberRepository;
     private final QuestRepository questRepository;
+    private final QuestUserRepository questUserRepository;
+    private final ActivityRepository activityRepository;
+    private final ActivityUserRepository activityUserRepository;
 
     public CollabQuestSessionCommandServiceImpl(
             CollabQuestSessionRepository collabQuestSessionRepository,
-            QuestRepository questRepository
+            CollabQuestMemberRepository collabQuestMemberRepository,
+            QuestRepository questRepository,
+            QuestUserRepository questUserRepository,
+            ActivityRepository activityRepository,
+            ActivityUserRepository activityUserRepository
     ) {
         this.collabQuestSessionRepository = collabQuestSessionRepository;
+        this.collabQuestMemberRepository = collabQuestMemberRepository;
         this.questRepository = questRepository;
+        this.questUserRepository = questUserRepository;
+        this.activityRepository = activityRepository;
+        this.activityUserRepository = activityUserRepository;
     }
 
+    @Transactional
     @Override
     public Result<CollabQuestSession, ApplicationError> handle(
             CreateCollabQuestSessionCommand command
@@ -59,8 +86,20 @@ public class CollabQuestSessionCommandServiceImpl implements CollabQuestSessionC
                     command.questId(),
                     command.ownerUserId()
             );
+            var savedCollabQuestSession =
+                    collabQuestSessionRepository.save(collabQuestSession);
 
-            return Result.success(collabQuestSessionRepository.save(collabQuestSession));
+            collabQuestMemberRepository.save(
+                    new CollabQuestMember(
+                            savedCollabQuestSession.getId(),
+                            command.ownerUserId(),
+                            command.ownerUserId(),
+                            MemberRole.OWNER,
+                            CollabMemberStatus.ACCEPTED
+                    )
+            );
+
+            return Result.success(savedCollabQuestSession);
         } catch (IllegalArgumentException | NullPointerException exception) {
             return Result.failure(
                     ApplicationError.validationError(
@@ -72,6 +111,115 @@ public class CollabQuestSessionCommandServiceImpl implements CollabQuestSessionC
             return Result.failure(
                     ApplicationError.unexpected(
                             "CollabQuestSession creation",
+                            exception.getMessage()
+                    )
+            );
+        }
+    }
+
+    @Transactional
+    @Override
+    public Result<CollabQuestSession, ApplicationError> handle(
+            StartCollabQuestSessionCommand command
+    ) {
+        var session = collabQuestSessionRepository.findById(command.sessionId());
+        if (session.isEmpty()) {
+            return Result.failure(
+                    ApplicationError.notFound(
+                            "CollabQuestSession",
+                            command.sessionId().toString()
+                    )
+            );
+        }
+
+        if (!Objects.equals(session.get().getOwnerId(), command.ownerUserId())) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Only the session owner can start the session",
+                            "User %d is not the owner of session %d".formatted(
+                                    command.ownerUserId(),
+                                    command.sessionId()
+                            )
+                    )
+            );
+        }
+
+        var acceptedMembers = collabQuestMemberRepository.findBySessionIdAndStatusIn(
+                command.sessionId(),
+                List.of(CollabMemberStatus.ACCEPTED)
+        );
+
+        if (acceptedMembers.size() < 2) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Collaborative quest requires at least two accepted members",
+                            "Accepted members: %d".formatted(acceptedMembers.size())
+                    )
+            );
+        }
+
+        for (var member : acceptedMembers) {
+            if (questUserRepository.existsByUserIdAndQuestId(
+                    member.getUserId(),
+                    session.get().getQuestId()
+            )) {
+                return Result.failure(
+                        ApplicationError.conflict(
+                                "QuestUser",
+                                "User %d already has this quest assigned".formatted(
+                                        member.getUserId()
+                                )
+                        )
+                );
+            }
+        }
+
+        try {
+            for (var member : acceptedMembers) {
+                var questUser = questUserRepository.save(
+                        new QuestUser(
+                                member.getUserId(),
+                                session.get().getQuestId(),
+                                session.get().getId()
+                        )
+                );
+
+                var activities = activityRepository.findByQuestsIdOrderByOrderAsc(
+                        questUser.getQuestId()
+                );
+                for (var activity : activities) {
+                    activityUserRepository.save(
+                            new ActivityUser(
+                                    questUser.getId(),
+                                    activity.getId(),
+                                    activity.getDescription(),
+                                    activity.getActivityConfiguration(),
+                                    session.get().getId()
+                            )
+                    );
+                }
+            }
+
+            session.get().start();
+            return Result.success(collabQuestSessionRepository.save(session.get()));
+        } catch (IllegalArgumentException | NullPointerException exception) {
+            return Result.failure(
+                    ApplicationError.validationError(
+                            "CollabQuestSession",
+                            exception.getMessage()
+                    )
+            );
+        } catch (IllegalStateException exception) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Collaborative quest session cannot be started",
+                            exception.getMessage()
+                    )
+            );
+        } catch (Exception exception) {
+            return Result.failure(
+                    ApplicationError.unexpected(
+                            "CollabQuestSession start",
                             exception.getMessage()
                     )
             );

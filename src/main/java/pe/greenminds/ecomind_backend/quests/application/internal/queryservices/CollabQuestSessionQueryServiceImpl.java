@@ -3,10 +3,11 @@ package pe.greenminds.ecomind_backend.quests.application.internal.queryservices;
 import org.springframework.stereotype.Service;
 import pe.greenminds.ecomind_backend.quests.application.queryservices.CollabQuestSessionQueryService;
 import pe.greenminds.ecomind_backend.quests.application.queryservices.CollabQuestSessionState;
-import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.ActivityUser;
+import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.CollabQuestMember;
 import pe.greenminds.ecomind_backend.quests.domain.model.queries.GetCollabQuestSessionStateQuery;
-import pe.greenminds.ecomind_backend.quests.domain.repositories.ActivityUserRepository;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabMemberStatus;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestSessionRepository;
+import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestMemberRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestUserRepository;
 
 import java.util.List;
@@ -14,17 +15,17 @@ import java.util.List;
 @Service
 public class CollabQuestSessionQueryServiceImpl implements CollabQuestSessionQueryService {
     private final CollabQuestSessionRepository collabQuestSessionRepository;
+    private final CollabQuestMemberRepository collabQuestMemberRepository;
     private final QuestUserRepository questUserRepository;
-    private final ActivityUserRepository activityUserRepository;
 
     public CollabQuestSessionQueryServiceImpl(
             CollabQuestSessionRepository collabQuestSessionRepository,
-            QuestUserRepository questUserRepository,
-            ActivityUserRepository activityUserRepository
+            CollabQuestMemberRepository collabQuestMemberRepository,
+            QuestUserRepository questUserRepository
     ) {
         this.collabQuestSessionRepository = collabQuestSessionRepository;
+        this.collabQuestMemberRepository = collabQuestMemberRepository;
         this.questUserRepository = questUserRepository;
-        this.activityUserRepository = activityUserRepository;
     }
 
     @Override
@@ -39,10 +40,13 @@ public class CollabQuestSessionQueryServiceImpl implements CollabQuestSessionQue
                 : collabQuestSessionRepository
                         .findByQuestIdAndOwnerUserId(query.questId(), query.userId())
                         .orElse(null);
-        var activityUsers = questUser == null
-                ? List.<ActivityUser>of()
-                : activityUserRepository.findByQuestUserId(questUser.getId());
+        var members = session == null
+                ? List.<CollabQuestMember>of()
+                : collabQuestMemberRepository.findBySessionIdAndStatusIn(
+                        session.getId(),
+                        List.of(CollabMemberStatus.PENDING, CollabMemberStatus.ACCEPTED)
+                );
 
-        return new CollabQuestSessionState(session, questUser, activityUsers);
+        return new CollabQuestSessionState(session, members);
     }
 }

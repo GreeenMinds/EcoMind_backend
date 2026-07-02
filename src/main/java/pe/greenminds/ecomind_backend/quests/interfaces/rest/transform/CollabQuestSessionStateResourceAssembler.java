@@ -12,23 +12,16 @@ public final class CollabQuestSessionStateResourceAssembler {
     public static CollabQuestSessionStateResource toResource(
             CollabQuestSessionState state
     ) {
-        var questUserResource = state.questUser() == null
-                ? null
-                : QuestUserResourceFromEntityAssembler.toResourceFromEntity(
-                        state.questUser()
-                );
-        var activityUserResources = state.activityUsers()
+        var memberResources = state.members()
                 .stream()
-                .map(ActivityUserResourceFromEntityAssembler::toResourceFromEntity)
+                .map(CollabQuestMemberResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
 
         return new CollabQuestSessionStateResource(
                 CollabQuestSessionResourceFromEntityAssembler.toResourceFromEntity(
                         state.session()
                 ),
-                List.of(),
-                questUserResource,
-                activityUserResources
+                memberResources
         );
     }
 }

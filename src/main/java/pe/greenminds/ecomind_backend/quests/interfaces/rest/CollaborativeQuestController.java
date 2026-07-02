@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import pe.greenminds.ecomind_backend.quests.application.commandservices.CollabQuestSessionCommandService;
 import pe.greenminds.ecomind_backend.quests.application.queryservices.CollabQuestSessionQueryService;
+import pe.greenminds.ecomind_backend.quests.domain.model.commands.StartCollabQuestSessionCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.queries.GetCollabQuestSessionStateQuery;
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.resources.CollabQuestSessionResource;
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.resources.CollabQuestSessionStateResource;
@@ -73,6 +75,33 @@ public class CollaborativeQuestController {
                 result,
                 CollabQuestSessionResourceFromEntityAssembler::toResourceFromEntity,
                 HttpStatus.CREATED
+        );
+    }
+
+    @PostMapping("/{sessionId}/start")
+    @Operation(summary = "Start a collaborative quest session")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Collaborative quest session started successfully",
+                    content = @Content(schema = @Schema(implementation = CollabQuestSessionResource.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "Session not found"),
+            @ApiResponse(responseCode = "409", description = "Quest already assigned"),
+            @ApiResponse(responseCode = "422", description = "Session cannot be started")
+    })
+    public ResponseEntity<?> startSession(
+            @PathVariable Long sessionId,
+            @RequestParam Long ownerUserId
+    ) {
+        var result = collabQuestSessionCommandService.handle(
+                new StartCollabQuestSessionCommand(sessionId, ownerUserId)
+        );
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                CollabQuestSessionResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.OK
         );
     }
 

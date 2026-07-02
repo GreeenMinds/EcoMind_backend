@@ -4,8 +4,6 @@ import java.util.List;
 
 public record CollabQuestSessionStateResource(
         CollabQuestSessionResource session,
-        List<Object> members,
-        QuestUserResource questUser,
-        List<ActivityUserResource> activityUsers
+        List<CollabQuestMemberResource> members
 ) {
 }
