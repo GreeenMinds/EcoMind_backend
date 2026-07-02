@@ -71,6 +71,15 @@ public class CollabQuestSessionCommandServiceImpl implements CollabQuestSessionC
             );
         }
 
+        if (activityRepository.countByQuestId(command.questId()) < 1) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Collaborative quest must have at least one activity",
+                            "Quest %d has no activities".formatted(command.questId())
+                    )
+            );
+        }
+
         if (collabQuestSessionRepository
                 .findByQuestIdAndOwnerUserId(command.questId(), command.ownerUserId())
                 .isPresent()) {
@@ -141,6 +150,15 @@ public class CollabQuestSessionCommandServiceImpl implements CollabQuestSessionC
                                     command.ownerUserId(),
                                     command.sessionId()
                             )
+                    )
+            );
+        }
+
+        if (activityRepository.countByQuestId(session.get().getQuestId()) < 1) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Collaborative quest must have at least one activity",
+                            "Quest %d has no activities".formatted(session.get().getQuestId())
                     )
             );
         }

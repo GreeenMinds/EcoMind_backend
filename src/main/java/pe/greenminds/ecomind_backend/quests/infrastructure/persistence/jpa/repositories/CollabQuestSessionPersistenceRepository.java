@@ -15,5 +15,9 @@ public interface CollabQuestSessionPersistenceRepository
             Long ownerId
     );
 
+    List<CollabQuestSessionPersistenceEntity> findByQuestId(Long questId);
+
     List<CollabQuestSessionPersistenceEntity> findByOwnerId(Long ownerId);
+
+    void deleteByQuestId(Long questId);
 }

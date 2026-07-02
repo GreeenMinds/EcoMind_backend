@@ -54,6 +54,15 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
             );
         }
 
+        if (activityRepository.countByQuestId(command.questId()) < 1) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Quest must have at least one activity",
+                            "Quest %d has no activities".formatted(command.questId())
+                    )
+            );
+        }
+
         if (questUserRepository.existsByUserIdAndQuestId(command.userId(), command.questId())) {
             return Result.failure(
                     ApplicationError.conflict(

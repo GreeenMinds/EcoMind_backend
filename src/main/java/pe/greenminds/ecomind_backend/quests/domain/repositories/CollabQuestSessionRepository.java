@@ -11,7 +11,11 @@ public interface CollabQuestSessionRepository {
 
     Optional<CollabQuestSession> findByQuestIdAndOwnerUserId(Long questId, Long ownerUserId);
 
+    List<CollabQuestSession> findByQuestId(Long questId);
+
     List<CollabQuestSession> findByOwnerUserId(Long ownerUserId);
 
     void deleteById(Long id);
+
+    void deleteByQuestId(Long questId);
 }

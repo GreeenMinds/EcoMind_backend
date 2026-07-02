@@ -37,9 +37,7 @@ public class CollabQuestSessionQueryServiceImpl implements CollabQuestSessionQue
                 ? collabQuestSessionRepository
                         .findById(questUser.getCollaborativeSessionId())
                         .orElse(null)
-                : collabQuestSessionRepository
-                        .findByQuestIdAndOwnerUserId(query.questId(), query.userId())
-                        .orElse(null);
+                : findSessionByOwnerOrMember(query);
         var members = session == null
                 ? List.<CollabQuestMember>of()
                 : collabQuestMemberRepository.findBySessionIdAndStatusIn(
@@ -48,5 +46,23 @@ public class CollabQuestSessionQueryServiceImpl implements CollabQuestSessionQue
                 );
 
         return new CollabQuestSessionState(session, members);
+    }
+
+    private pe.greenminds.ecomind_backend.quests.domain.model.aggregates.CollabQuestSession
+    findSessionByOwnerOrMember(GetCollabQuestSessionStateQuery query) {
+        var ownerSession = collabQuestSessionRepository
+                .findByQuestIdAndOwnerUserId(query.questId(), query.userId());
+        if (ownerSession.isPresent()) {
+            return ownerSession.get();
+        }
+
+        return collabQuestMemberRepository
+                .findByUserIdAndQuestId(query.userId(), query.questId())
+                .stream()
+                .filter(member -> member.getStatus() == CollabMemberStatus.PENDING
+                        || member.getStatus() == CollabMemberStatus.ACCEPTED)
+                .findFirst()
+                .flatMap(member -> collabQuestSessionRepository.findById(member.getSessionId()))
+                .orElse(null);
     }
 }

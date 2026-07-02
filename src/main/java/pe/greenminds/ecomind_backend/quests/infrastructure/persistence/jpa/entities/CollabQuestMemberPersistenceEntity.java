@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabMemberStatus;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.MemberRole;
 import pe.greenminds.ecomind_backend.shared.infrastructure.persistence.jpa.entities.AuditableAbstractPersistenceEntity;
@@ -12,7 +13,15 @@ import pe.greenminds.ecomind_backend.shared.infrastructure.persistence.jpa.entit
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "collaborative_quest_member")
+@Table(
+        name = "collaborative_quest_member",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_collaborative_quest_member_session_user",
+                        columnNames = {"session_id", "user_id"}
+                )
+        }
+)
 public class CollabQuestMemberPersistenceEntity extends AuditableAbstractPersistenceEntity {
     @Column(name = "session_id", nullable = false)
     private Long sessionId;

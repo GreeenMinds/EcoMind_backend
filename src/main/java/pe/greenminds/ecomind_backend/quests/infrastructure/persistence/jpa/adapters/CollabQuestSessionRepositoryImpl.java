@@ -61,6 +61,14 @@ public class CollabQuestSessionRepositoryImpl implements CollabQuestSessionRepos
     }
 
     @Override
+    public List<CollabQuestSession> findByQuestId(Long questId) {
+        return collabQuestSessionPersistenceRepository.findByQuestId(questId)
+                .stream()
+                .map(CollabQuestSessionPersistenceAssembler::toDomainFromPersistence)
+                .toList();
+    }
+
+    @Override
     public List<CollabQuestSession> findByOwnerUserId(Long ownerUserId) {
         return collabQuestSessionPersistenceRepository.findByOwnerId(ownerUserId)
                 .stream()
@@ -71,5 +79,10 @@ public class CollabQuestSessionRepositoryImpl implements CollabQuestSessionRepos
     @Override
     public void deleteById(Long id) {
         collabQuestSessionPersistenceRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteByQuestId(Long questId) {
+        collabQuestSessionPersistenceRepository.deleteByQuestId(questId);
     }
 }
