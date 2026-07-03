@@ -2,6 +2,7 @@ package pe.greenminds.ecomind_backend.quests.domain.repositories;
 
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.CollabQuestMember;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabMemberStatus;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabQuestStatus;
 
 import java.util.List;
 
@@ -17,4 +18,9 @@ public interface CollabQuestMemberRepository {
             List<CollabMemberStatus> statuses
     );
     List<CollabQuestMember> findByUserIdAndQuestId(Long userId, Long questId);
+    List<CollabQuestMember> findByUserIdAndQuestIdAndSessionStatusIn(
+            Long userId,
+            Long questId,
+            List<CollabQuestStatus> sessionStatuses
+    );
 }

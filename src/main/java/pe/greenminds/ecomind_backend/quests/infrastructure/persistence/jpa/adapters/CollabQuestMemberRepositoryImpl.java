@@ -4,6 +4,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Repository;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.CollabQuestMember;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabMemberStatus;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabQuestStatus;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestMemberRepository;
 import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.assemblers.CollabQuestMemberPersistenceAssembler;
 import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.repositories.CollabQuestMemberPersistenceRepository;
@@ -89,6 +90,19 @@ public class CollabQuestMemberRepositoryImpl implements CollabQuestMemberReposit
     @Override
     public List<CollabQuestMember> findByUserIdAndQuestId(Long userId, Long questId) {
         return collabQuestMemberPersistenceRepository.findByUserIdAndQuestId(userId, questId)
+                .stream()
+                .map(CollabQuestMemberPersistenceAssembler::toDomainFromPersistence)
+                .toList();
+    }
+
+    @Override
+    public List<CollabQuestMember> findByUserIdAndQuestIdAndSessionStatusIn(
+            Long userId,
+            Long questId,
+            List<CollabQuestStatus> sessionStatuses
+    ) {
+        return collabQuestMemberPersistenceRepository
+                .findByUserIdAndQuestIdAndSessionStatusIn(userId, questId, sessionStatuses)
                 .stream()
                 .map(CollabQuestMemberPersistenceAssembler::toDomainFromPersistence)
                 .toList();

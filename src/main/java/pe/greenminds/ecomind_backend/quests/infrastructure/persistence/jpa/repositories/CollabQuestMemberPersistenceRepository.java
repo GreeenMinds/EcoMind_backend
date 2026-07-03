@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabMemberStatus;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabQuestStatus;
 import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.entities.CollabQuestMemberPersistenceEntity;
 
 import java.util.List;
@@ -38,5 +39,20 @@ public interface CollabQuestMemberPersistenceRepository
     List<CollabQuestMemberPersistenceEntity> findByUserIdAndQuestId(
             @Param("userId") Long userId,
             @Param("questId") Long questId
+    );
+
+    @Query("""
+            select member
+            from CollabQuestMemberPersistenceEntity member
+            join CollabQuestSessionPersistenceEntity session
+                on session.id = member.sessionId
+            where member.userId = :userId
+                and session.questId = :questId
+                and session.status in :sessionStatuses
+            """)
+    List<CollabQuestMemberPersistenceEntity> findByUserIdAndQuestIdAndSessionStatusIn(
+            @Param("userId") Long userId,
+            @Param("questId") Long questId,
+            @Param("sessionStatuses") List<CollabQuestStatus> sessionStatuses
     );
 }

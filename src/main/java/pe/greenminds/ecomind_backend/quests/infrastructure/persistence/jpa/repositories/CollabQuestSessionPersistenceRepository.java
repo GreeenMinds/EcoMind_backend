@@ -2,6 +2,7 @@ package pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.repo
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabQuestStatus;
 import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.entities.CollabQuestSessionPersistenceEntity;
 
 import java.util.List;
@@ -13,6 +14,12 @@ public interface CollabQuestSessionPersistenceRepository
     Optional<CollabQuestSessionPersistenceEntity> findByQuestIdAndOwnerId(
             Long questId,
             Long ownerId
+    );
+
+    Optional<CollabQuestSessionPersistenceEntity> findFirstByQuestIdAndOwnerIdAndStatusInOrderByIdDesc(
+            Long questId,
+            Long ownerId,
+            List<CollabQuestStatus> statuses
     );
 
     List<CollabQuestSessionPersistenceEntity> findByQuestId(Long questId);

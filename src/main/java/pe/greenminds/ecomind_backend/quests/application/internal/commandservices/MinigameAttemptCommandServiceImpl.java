@@ -2,8 +2,10 @@ package pe.greenminds.ecomind_backend.quests.application.internal.commandservice
 
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import pe.greenminds.ecomind_backend.monetization.domain.model.valueobjects.MovementOrigin;
 import pe.greenminds.ecomind_backend.profile.domain.repositories.UserRepository;
 import pe.greenminds.ecomind_backend.quests.application.commandservices.MinigameAttemptCommandService;
+import pe.greenminds.ecomind_backend.quests.application.internal.services.QuestRewardService;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.MinigameAttempt;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.CancelMinigameAttemptCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.CreateMinigameAttemptCommand;
@@ -28,17 +30,20 @@ public class MinigameAttemptCommandServiceImpl implements MinigameAttemptCommand
     private final MinigameRepository minigameRepository;
     private final QuestRepository questRepository;
     private final UserRepository userRepository;
+    private final QuestRewardService questRewardService;
 
     public MinigameAttemptCommandServiceImpl(
             MinigameAttemptRepository minigameAttemptRepository,
             MinigameRepository minigameRepository,
             QuestRepository questRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            QuestRewardService questRewardService
     ) {
         this.minigameAttemptRepository = minigameAttemptRepository;
         this.minigameRepository = minigameRepository;
         this.questRepository = questRepository;
         this.userRepository = userRepository;
+        this.questRewardService = questRewardService;
     }
 
     @Override
@@ -164,7 +169,18 @@ public class MinigameAttemptCommandServiceImpl implements MinigameAttemptCommand
                     givenEcopoints
             );
 
-            return Result.success(minigameAttemptRepository.save(attempt.get()));
+            var savedAttempt = minigameAttemptRepository.save(attempt.get());
+            if (successful) {
+                questRewardService.grantRewards(
+                        savedAttempt.getUserId(),
+                        savedAttempt.getGivenGems(),
+                        savedAttempt.getGivenEcopoints(),
+                        MovementOrigin.MINIGAME,
+                        savedAttempt.getId()
+                );
+            }
+
+            return Result.success(savedAttempt);
         } catch (IllegalArgumentException | NullPointerException exception) {
             return Result.failure(
                     ApplicationError.validationError("MinigameAttempt", exception.getMessage())

@@ -10,9 +10,9 @@ import java.util.Map;
         name = "CreateMinigameRequest",
         example = """
         {
-          "name": "Recicla rapido",
-          "description": "Clasifica residuos correctamente.",
-          "url": "https://example.com/minigames/recycle",
+          "name": "Recolector Eco",
+          "description": "Suma puntos recolectando energia hasta alcanzar la meta.",
+          "url": "/quests/minigames/simple-score",
           "completionRules": {
             "minScore": 800
           }

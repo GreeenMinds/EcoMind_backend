@@ -7,15 +7,7 @@ import pe.greenminds.ecomind_backend.shared.infrastructure.persistence.jpa.entit
 import java.time.LocalDate;
 
 @Entity
-@Table(
-        name = "collaborative_quest_session",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_collaborative_quest_session_quest_owner",
-                        columnNames = {"quest_id", "owner_id"}
-                )
-        }
-)
+@Table(name = "collaborative_quest_session")
 public class CollabQuestSessionPersistenceEntity extends AuditableAbstractPersistenceEntity {
 
     @Column(name="quest_id", nullable = false)

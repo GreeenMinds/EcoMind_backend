@@ -2,8 +2,11 @@ package pe.greenminds.ecomind_backend.quests.application.internal.commandservice
 
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import pe.greenminds.ecomind_backend.monetization.domain.model.valueobjects.MovementOrigin;
 import pe.greenminds.ecomind_backend.quests.application.commandservices.QuestUserCommandService;
+import pe.greenminds.ecomind_backend.quests.application.internal.services.QuestRewardService;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.ActivityUser;
+import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.Quest;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.QuestUser;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.CompleteQuestUserCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.CreateQuestUserCommand;
@@ -23,12 +26,16 @@ import pe.greenminds.ecomind_backend.shared.application.result.Result;
 
 @Service
 public class QuestUserCommandServiceImpl implements QuestUserCommandService {
+    private static final java.util.List<QuestStatus> ACTIVE_QUEST_USER_STATUSES =
+            java.util.List.of(QuestStatus.IN_PROGRESS, QuestStatus.READY_TO_COMPLETE);
+
     private final QuestUserRepository questUserRepository;
     private final QuestRepository questRepository;
     private final ActivityRepository activityRepository;
     private final ActivityUserRepository activityUserRepository;
     private final CollabQuestSessionRepository collabQuestSessionRepository;
     private final CollabQuestMemberRepository collabQuestMemberRepository;
+    private final QuestRewardService questRewardService;
 
     public QuestUserCommandServiceImpl(
             QuestUserRepository questUserRepository,
@@ -36,7 +43,8 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
             ActivityUserRepository activityUserRepository,
             ActivityRepository activityRepository,
             CollabQuestSessionRepository collabQuestSessionRepository,
-            CollabQuestMemberRepository collabQuestMemberRepository
+            CollabQuestMemberRepository collabQuestMemberRepository,
+            QuestRewardService questRewardService
     ) {
         this.questUserRepository = questUserRepository;
         this.questRepository = questRepository;
@@ -44,6 +52,7 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
         this.activityRepository = activityRepository;
         this.collabQuestSessionRepository = collabQuestSessionRepository;
         this.collabQuestMemberRepository = collabQuestMemberRepository;
+        this.questRewardService = questRewardService;
     }
 
     @Transactional
@@ -75,7 +84,11 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
             );
         }
 
-        if (questUserRepository.existsByUserIdAndQuestId(command.userId(), command.questId())) {
+        if (questUserRepository.existsByUserIdAndQuestIdAndStatusIn(
+                command.userId(),
+                command.questId(),
+                ACTIVE_QUEST_USER_STATUSES
+        )) {
             return Result.failure(
                     ApplicationError.conflict(
                             "QuestUser",
@@ -158,9 +171,21 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
             return completeCollaborativeQuest(questUser.get());
         }
 
+        var quest = questRepository.findById(questUser.get().getQuestId());
+        if (quest.isEmpty()) {
+            return Result.failure(
+                    ApplicationError.notFound(
+                            "Quest",
+                            questUser.get().getQuestId().toString()
+                    )
+            );
+        }
+
         try {
             questUser.get().complete();
-            return Result.success(questUserRepository.save(questUser.get()));
+            var savedQuestUser = questUserRepository.save(questUser.get());
+            grantQuestUserReward(savedQuestUser, quest.get(), MovementOrigin.QUEST, savedQuestUser.getId());
+            return Result.success(savedQuestUser);
         } catch (IllegalStateException exception) {
             return Result.failure(
                     ApplicationError.businessRuleViolation(
@@ -219,9 +244,10 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
 
         var questUsers = new java.util.ArrayList<QuestUser>();
         for (var member : acceptedMembers) {
-            var questUser = questUserRepository.findByUserIdAndQuestId(
+            var questUser = questUserRepository.findFirstByUserIdAndQuestIdAndStatusIn(
                     member.getUserId(),
-                    session.get().getQuestId()
+                    session.get().getQuestId(),
+                    ACTIVE_QUEST_USER_STATUSES
             );
 
             if (questUser.isEmpty()
@@ -255,6 +281,16 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
             questUsers.add(questUser.get());
         }
 
+        var quest = questRepository.findById(session.get().getQuestId());
+        if (quest.isEmpty()) {
+            return Result.failure(
+                    ApplicationError.notFound(
+                            "Quest",
+                            session.get().getQuestId().toString()
+                    )
+            );
+        }
+
         try {
             QuestUser savedRequestedQuestUser = null;
             for (var questUser : questUsers) {
@@ -266,7 +302,16 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
             }
 
             session.get().complete();
-            collabQuestSessionRepository.save(session.get());
+            var savedSession = collabQuestSessionRepository.save(session.get());
+
+            for (var questUser : questUsers) {
+                grantQuestUserReward(
+                        questUser,
+                        quest.get(),
+                        MovementOrigin.COLLAB_QUEST,
+                        savedSession.getId()
+                );
+            }
 
             return Result.success(savedRequestedQuestUser);
         } catch (IllegalStateException exception) {
@@ -277,6 +322,21 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
                     )
             );
         }
+    }
+
+    private void grantQuestUserReward(
+            QuestUser questUser,
+            Quest quest,
+            MovementOrigin origin,
+            Long originId
+    ) {
+        questRewardService.grantRewards(
+                questUser.getUserId(),
+                quest.getGems(),
+                quest.getEcopoints(),
+                origin,
+                originId
+        );
     }
 
     private void handleCollaborativeQuestUserDeletion(QuestUser questUser) {
