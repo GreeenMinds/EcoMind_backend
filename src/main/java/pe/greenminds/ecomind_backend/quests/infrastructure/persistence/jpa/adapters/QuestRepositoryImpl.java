@@ -71,4 +71,9 @@ public class QuestRepositoryImpl implements QuestRepository {
     public boolean existsById(Long id) {
         return questPersistenceRepository.existsById(id);
     }
+
+    @Override
+    public boolean existsByMinigameId(Long minigameId) {
+        return questPersistenceRepository.existsByMinigameId(minigameId);
+    }
 }

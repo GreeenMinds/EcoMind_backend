@@ -11,6 +11,7 @@ import pe.greenminds.ecomind_backend.quests.domain.model.commands.DeleteQuestUse
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabMemberStatus;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabQuestStatus;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestStatus;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.ActivityRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.ActivityUserRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestMemberRepository;
@@ -48,9 +49,20 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
     @Transactional
     @Override
     public Result<QuestUser, ApplicationError> handle(CreateQuestUserCommand command) {
-        if (!questRepository.existsById(command.questId())) {
+        var quest = questRepository.findById(command.questId());
+        if (quest.isEmpty()) {
             return Result.failure(
                     ApplicationError.notFound("Quest", command.questId().toString())
+            );
+        }
+
+        if (quest.get().getType() == QuestType.MINIGAME) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Minigame quests must be started with a minigame attempt",
+                            "Create a MinigameAttempt for quest %d instead of a QuestUser"
+                                    .formatted(command.questId())
+                    )
             );
         }
 

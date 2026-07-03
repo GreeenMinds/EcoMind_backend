@@ -14,6 +14,8 @@ import java.util.List;
 
 @Repository
 public interface QuestPersistenceRepository extends JpaRepository<QuestPersistenceEntity, Long> {
+    boolean existsByMinigameId(Long minigameId);
+
     @Query("""
     SELECT q FROM QuestPersistenceEntity q
     WHERE (:title = '' OR LOWER(q.title)
