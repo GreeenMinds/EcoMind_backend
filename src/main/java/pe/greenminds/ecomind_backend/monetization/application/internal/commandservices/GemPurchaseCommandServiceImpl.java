@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import pe.greenminds.ecomind_backend.monetization.application.commandservices.GemPurchaseCommandService;
 import pe.greenminds.ecomind_backend.monetization.domain.model.aggregates.GemPurchase;
 import pe.greenminds.ecomind_backend.monetization.domain.model.commands.ApproveGemPurchaseCommand;
+import pe.greenminds.ecomind_backend.monetization.domain.model.commands.ConfirmGemPurchaseByChargeCommand;
 import pe.greenminds.ecomind_backend.monetization.domain.model.commands.CreateGemPurchaseCheckoutCommand;
 import pe.greenminds.ecomind_backend.monetization.domain.model.commands.CreateGemPurchaseCommand;
 import pe.greenminds.ecomind_backend.monetization.application.outboundservices.external.ProfileMonetizationExternalService;
@@ -244,5 +245,36 @@ public class GemPurchaseCommandServiceImpl implements GemPurchaseCommandService 
                     ApplicationError.businessRuleViolation("GemPurchase rejection", e.getMessage())
             );
         }
+    }
+
+    @Transactional
+    @Override
+    public Result<GemPurchase, ApplicationError> handle(ConfirmGemPurchaseByChargeCommand command) {
+        var gemPurchase = gemPurchaseRepository.findByPaymentReference(command.chargeReference());
+        if (gemPurchase.isEmpty()) {
+            return Result.failure(
+                    ApplicationError.notFound("GemPurchase", command.chargeReference())
+            );
+        }
+
+        // Idempotent: if the purchase was already approved/rejected (e.g. the
+        // synchronous /pay already handled it), the webhook is a no-op.
+        if (gemPurchase.get().getPaymentStatus() != PaymentStatus.PENDING) {
+            return Result.success(gemPurchase.get());
+        }
+
+        if (!command.approved()) {
+            gemPurchase.get().reject();
+            return Result.success(gemPurchaseRepository.save(gemPurchase.get()));
+        }
+
+        var gemPackage = gemPackageRepository.findById(gemPurchase.get().getPackageId());
+        if (gemPackage.isEmpty()) {
+            return Result.failure(
+                    ApplicationError.notFound("GemPackage", gemPurchase.get().getPackageId().toString())
+            );
+        }
+
+        return approveAndCredit(gemPurchase.get(), gemPackage.get());
     }
 }
