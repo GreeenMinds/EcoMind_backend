@@ -22,4 +22,5 @@ public interface QuestRepository {
     void deleteById(Long id);
 
     boolean existsById(Long id);
+    boolean existsByMinigameId(Long minigameId);
 }

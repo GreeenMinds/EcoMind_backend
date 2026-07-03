@@ -64,4 +64,9 @@ public class MinigameAttemptRepositoryImpl implements MinigameAttemptRepository 
                 .map(MinigameAttemptPersistenceAssembler::toDomainFromPersistence)
                 .toList();
     }
+
+    @Override
+    public void deleteByMinigameId(Long minigameId) {
+        minigameAttemptPersistenceRepository.deleteByMinigameId(minigameId);
+    }
 }

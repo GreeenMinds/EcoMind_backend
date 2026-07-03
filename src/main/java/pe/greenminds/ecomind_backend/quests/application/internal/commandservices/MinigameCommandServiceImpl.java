@@ -1,10 +1,14 @@
 package pe.greenminds.ecomind_backend.quests.application.internal.commandservices;
 
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import pe.greenminds.ecomind_backend.quests.application.commandservices.MinigameCommandService;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.Minigame;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.CreateMinigameCommand;
+import pe.greenminds.ecomind_backend.quests.domain.model.commands.DeleteMinigameCommand;
+import pe.greenminds.ecomind_backend.quests.domain.repositories.MinigameAttemptRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.MinigameRepository;
+import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestRepository;
 import pe.greenminds.ecomind_backend.shared.application.result.ApplicationError;
 import pe.greenminds.ecomind_backend.shared.application.result.Result;
 
@@ -15,9 +19,17 @@ public class MinigameCommandServiceImpl implements MinigameCommandService {
     private static final String MIN_SCORE_RULE = "minScore";
 
     private final MinigameRepository minigameRepository;
+    private final MinigameAttemptRepository minigameAttemptRepository;
+    private final QuestRepository questRepository;
 
-    public MinigameCommandServiceImpl(MinigameRepository minigameRepository) {
+    public MinigameCommandServiceImpl(
+            MinigameRepository minigameRepository,
+            MinigameAttemptRepository minigameAttemptRepository,
+            QuestRepository questRepository
+    ) {
         this.minigameRepository = minigameRepository;
+        this.minigameAttemptRepository = minigameAttemptRepository;
+        this.questRepository = questRepository;
     }
 
     @Override
@@ -44,6 +56,31 @@ public class MinigameCommandServiceImpl implements MinigameCommandService {
                     ApplicationError.unexpected("Minigame creation", exception.getMessage())
             );
         }
+    }
+
+    @Transactional
+    @Override
+    public Result<Minigame, ApplicationError> handle(DeleteMinigameCommand command) {
+        var minigame = minigameRepository.findById(command.minigameId());
+        if (minigame.isEmpty()) {
+            return Result.failure(
+                    ApplicationError.notFound("Minigame", command.minigameId().toString())
+            );
+        }
+
+        if (questRepository.existsByMinigameId(command.minigameId())) {
+            return Result.failure(
+                    ApplicationError.conflict(
+                            "Minigame",
+                            "Delete the quests associated with this minigame first"
+                    )
+            );
+        }
+
+        minigameAttemptRepository.deleteByMinigameId(command.minigameId());
+        minigameRepository.deleteById(command.minigameId());
+
+        return Result.success(minigame.get());
     }
 
     private void validateCompletionRules(Map<String, Object> completionRules) {

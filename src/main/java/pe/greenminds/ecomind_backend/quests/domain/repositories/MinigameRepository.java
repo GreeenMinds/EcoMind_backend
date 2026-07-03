@@ -10,4 +10,5 @@ public interface MinigameRepository {
     Optional<Minigame> findById(Long id);
     boolean existsById(Long id);
     Minigame save(Minigame minigame);
+    void deleteById(Long id);
 }

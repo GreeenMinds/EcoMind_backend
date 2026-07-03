@@ -17,4 +17,5 @@ public interface MinigameAttemptRepository {
             Long minigameId,
             OffsetDateTime since
     );
+    void deleteByMinigameId(Long minigameId);
 }

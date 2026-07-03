@@ -1,6 +1,7 @@
 package pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -35,4 +36,7 @@ public interface MinigameAttemptPersistenceRepository
             @Param("minigameId") Long minigameId,
             @Param("since") OffsetDateTime since
     );
+
+    @Modifying
+    void deleteByMinigameId(Long minigameId);
 }

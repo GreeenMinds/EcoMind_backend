@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pe.greenminds.ecomind_backend.quests.application.commandservices.MinigameCommandService;
 import pe.greenminds.ecomind_backend.quests.application.queryservices.MinigameQueryService;
+import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.Minigame;
+import pe.greenminds.ecomind_backend.quests.domain.model.commands.DeleteMinigameCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.queries.GetAllMinigamesQuery;
 import pe.greenminds.ecomind_backend.quests.domain.model.queries.GetMinigameByIdQuery;
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.resources.CreateMinigameResource;
@@ -21,6 +24,7 @@ import pe.greenminds.ecomind_backend.quests.interfaces.rest.resources.MinigameRe
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.transform.CreateMinigameCommandFromResourceAssembler;
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.transform.MinigameResourceFromEntityAssembler;
 import pe.greenminds.ecomind_backend.shared.application.result.ApplicationError;
+import pe.greenminds.ecomind_backend.shared.application.result.Result;
 import pe.greenminds.ecomind_backend.shared.interfaces.rest.transform.ErrorResponseAssembler;
 import pe.greenminds.ecomind_backend.shared.interfaces.rest.transform.ResponseEntityAssembler;
 
@@ -75,5 +79,18 @@ public class MinigameController {
         return ResponseEntity.ok(
                 MinigameResourceFromEntityAssembler.toResourceFromEntity(minigame.get())
         );
+    }
+
+    @DeleteMapping("/{minigameId}")
+    @Operation(summary = "Delete a minigame")
+    public ResponseEntity<?> deleteMinigame(@PathVariable Long minigameId) {
+        var result = minigameCommandService.handle(new DeleteMinigameCommand(minigameId));
+
+        return switch (result) {
+            case Result.Success<Minigame, ApplicationError> ignored ->
+                    ResponseEntity.noContent().build();
+            case Result.Failure<Minigame, ApplicationError> failure ->
+                    ErrorResponseAssembler.toErrorResponseFromApplicationError(failure.error());
+        };
     }
 }

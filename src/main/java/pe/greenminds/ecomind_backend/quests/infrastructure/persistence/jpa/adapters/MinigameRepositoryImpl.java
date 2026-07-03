@@ -44,4 +44,9 @@ public class MinigameRepositoryImpl implements MinigameRepository {
                 )
         );
     }
+
+    @Override
+    public void deleteById(Long id) {
+        minigamePersistenceRepository.deleteById(id);
+    }
 }
