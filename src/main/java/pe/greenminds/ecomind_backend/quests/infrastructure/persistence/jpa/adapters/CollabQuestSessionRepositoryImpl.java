@@ -3,6 +3,7 @@ package pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.adap
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Repository;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.CollabQuestSession;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabQuestStatus;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestSessionRepository;
 import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.assemblers.CollabQuestSessionPersistenceAssembler;
 import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.repositories.CollabQuestSessionPersistenceRepository;
@@ -57,6 +58,21 @@ public class CollabQuestSessionRepositoryImpl implements CollabQuestSessionRepos
     ) {
         return collabQuestSessionPersistenceRepository
                 .findByQuestIdAndOwnerId(questId, ownerUserId)
+                .map(CollabQuestSessionPersistenceAssembler::toDomainFromPersistence);
+    }
+
+    @Override
+    public Optional<CollabQuestSession> findByQuestIdAndOwnerUserIdAndStatusIn(
+            Long questId,
+            Long ownerUserId,
+            List<CollabQuestStatus> statuses
+    ) {
+        return collabQuestSessionPersistenceRepository
+                .findFirstByQuestIdAndOwnerIdAndStatusInOrderByIdDesc(
+                        questId,
+                        ownerUserId,
+                        statuses
+                )
                 .map(CollabQuestSessionPersistenceAssembler::toDomainFromPersistence);
     }
 

@@ -11,10 +11,21 @@ public interface QuestUserRepository {
     Optional<QuestUser> findById(Long id);
 
     Optional<QuestUser> findByUserIdAndQuestId(Long userId, Long questId);
+    Optional<QuestUser> findFirstByUserIdAndQuestIdAndStatusIn(
+            Long userId,
+            Long questId,
+            List<QuestStatus> statuses
+    );
 
     List<QuestUser> findByQuestId(Long questId);
+    List<QuestUser> findByQuestIdAndStatusIn(Long questId, List<QuestStatus> statuses);
 
     boolean existsByUserIdAndQuestId(Long userId, Long questId);
+    boolean existsByUserIdAndQuestIdAndStatusIn(
+            Long userId,
+            Long questId,
+            List<QuestStatus> statuses
+    );
 
     boolean existsByUserIdAndQuestIdAndStatusAndIdNot(
             Long userId,

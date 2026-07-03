@@ -4,5 +4,7 @@ public enum MovementOrigin {
     COSMETIC,
     MULTIPLIER,
     GEM_PACKAGE,
-    QUEST
+    QUEST,
+    COLLAB_QUEST,
+    MINIGAME
 }

@@ -54,6 +54,21 @@ public class QuestUserRepositoryImpl implements QuestUserRepository {
     }
 
     @Override
+    public Optional<QuestUser> findFirstByUserIdAndQuestIdAndStatusIn(
+            Long userId,
+            Long questId,
+            List<QuestStatus> statuses
+    ) {
+        return questUserPersistenceRepository
+                .findFirstByUserIdAndQuestIdAndStatusInOrderByIdDesc(
+                        userId,
+                        questId,
+                        statuses
+                )
+                .map(QuestUserPersistenceAssembler::toDomainFromPersistence);
+    }
+
+    @Override
     public List<QuestUser> findByQuestId(Long questId) {
         return questUserPersistenceRepository.findByQuestId(questId)
                 .stream()
@@ -62,8 +77,32 @@ public class QuestUserRepositoryImpl implements QuestUserRepository {
     }
 
     @Override
+    public List<QuestUser> findByQuestIdAndStatusIn(
+            Long questId,
+            List<QuestStatus> statuses
+    ) {
+        return questUserPersistenceRepository.findByQuestIdAndStatusIn(questId, statuses)
+                .stream()
+                .map(QuestUserPersistenceAssembler::toDomainFromPersistence)
+                .toList();
+    }
+
+    @Override
     public boolean existsByUserIdAndQuestId(Long userId, Long questId) {
         return questUserPersistenceRepository.existsByUserIdAndQuestId(userId, questId);
+    }
+
+    @Override
+    public boolean existsByUserIdAndQuestIdAndStatusIn(
+            Long userId,
+            Long questId,
+            List<QuestStatus> statuses
+    ) {
+        return questUserPersistenceRepository.existsByUserIdAndQuestIdAndStatusIn(
+                userId,
+                questId,
+                statuses
+        );
     }
 
     @Override

@@ -9,8 +9,10 @@ import pe.greenminds.ecomind_backend.quests.domain.model.commands.CreateCollabQu
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.DeletePendingCollabQuestSessionCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.StartCollabQuestSessionCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabMemberStatus;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabQuestStatus;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.MemberRole;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestStatus;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestMemberRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestSessionRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestRepository;
@@ -27,6 +29,11 @@ import java.util.Objects;
 
 @Service
 public class CollabQuestSessionCommandServiceImpl implements CollabQuestSessionCommandService {
+    private static final List<CollabQuestStatus> ACTIVE_SESSION_STATUSES =
+            List.of(CollabQuestStatus.PENDING, CollabQuestStatus.STARTED);
+    private static final List<QuestStatus> ACTIVE_QUEST_USER_STATUSES =
+            List.of(QuestStatus.IN_PROGRESS, QuestStatus.READY_TO_COMPLETE);
+
     private final CollabQuestSessionRepository collabQuestSessionRepository;
     private final CollabQuestMemberRepository collabQuestMemberRepository;
     private final QuestRepository questRepository;
@@ -81,7 +88,11 @@ public class CollabQuestSessionCommandServiceImpl implements CollabQuestSessionC
         }
 
         if (collabQuestSessionRepository
-                .findByQuestIdAndOwnerUserId(command.questId(), command.ownerUserId())
+                .findByQuestIdAndOwnerUserIdAndStatusIn(
+                        command.questId(),
+                        command.ownerUserId(),
+                        ACTIVE_SESSION_STATUSES
+                )
                 .isPresent()) {
             return Result.failure(
                     ApplicationError.conflict(
@@ -178,9 +189,10 @@ public class CollabQuestSessionCommandServiceImpl implements CollabQuestSessionC
         }
 
         for (var member : acceptedMembers) {
-            if (questUserRepository.existsByUserIdAndQuestId(
+            if (questUserRepository.existsByUserIdAndQuestIdAndStatusIn(
                     member.getUserId(),
-                    session.get().getQuestId()
+                    session.get().getQuestId(),
+                    ACTIVE_QUEST_USER_STATUSES
             )) {
                 return Result.failure(
                         ApplicationError.conflict(

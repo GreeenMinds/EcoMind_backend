@@ -17,6 +17,7 @@ import pe.greenminds.ecomind_backend.quests.domain.model.commands.RemoveCollabQu
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabMemberStatus;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.CollabQuestStatus;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.MemberRole;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestStatus;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestMemberRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestSessionRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.ActivityUserRepository;
@@ -28,6 +29,11 @@ import java.util.Objects;
 
 @Service
 public class CollabQuestMemberCommandServiceImpl implements CollabQuestMemberCommandService {
+    private static final java.util.List<CollabQuestStatus> ACTIVE_SESSION_STATUSES =
+            java.util.List.of(CollabQuestStatus.PENDING, CollabQuestStatus.STARTED);
+    private static final java.util.List<QuestStatus> ACTIVE_QUEST_USER_STATUSES =
+            java.util.List.of(QuestStatus.IN_PROGRESS, QuestStatus.READY_TO_COMPLETE);
+
     private final CollabQuestMemberRepository collabQuestMemberRepository;
     private final CollabQuestSessionRepository collabQuestSessionRepository;
     private final UserRepository userRepository;
@@ -132,9 +138,11 @@ public class CollabQuestMemberCommandServiceImpl implements CollabQuestMemberCom
             );
         }
 
-        var acceptedQuestMemberships = collabQuestMemberRepository.findByUserIdAndQuestId(
+        var acceptedQuestMemberships = collabQuestMemberRepository
+                .findByUserIdAndQuestIdAndSessionStatusIn(
                 command.invitedUserId(),
-                session.get().getQuestId()
+                session.get().getQuestId(),
+                ACTIVE_SESSION_STATUSES
         );
         var alreadyAcceptedQuest = acceptedQuestMemberships.stream()
                 .anyMatch(member -> member.getStatus() == CollabMemberStatus.ACCEPTED);
@@ -223,9 +231,11 @@ public class CollabQuestMemberCommandServiceImpl implements CollabQuestMemberCom
             );
         }
 
-        var acceptedQuestMemberships = collabQuestMemberRepository.findByUserIdAndQuestId(
+        var acceptedQuestMemberships = collabQuestMemberRepository
+                .findByUserIdAndQuestIdAndSessionStatusIn(
                 member.getUserId(),
-                session.get().getQuestId()
+                session.get().getQuestId(),
+                ACTIVE_SESSION_STATUSES
         );
         var alreadyAcceptedQuest = acceptedQuestMemberships.stream()
                 .anyMatch(existingMember ->
@@ -238,6 +248,20 @@ public class CollabQuestMemberCommandServiceImpl implements CollabQuestMemberCom
                     ApplicationError.conflict(
                             "CollabQuestMember",
                             "The user already accepted an invitation for this quest"
+                    )
+            );
+        }
+
+        var activeQuestUser = questUserRepository.findFirstByUserIdAndQuestIdAndStatusIn(
+                member.getUserId(),
+                session.get().getQuestId(),
+                ACTIVE_QUEST_USER_STATUSES
+        );
+        if (activeQuestUser.isPresent()) {
+            return Result.failure(
+                    ApplicationError.conflict(
+                            "QuestUser",
+                            "The user must finish or leave their current quest session first"
                     )
             );
         }
@@ -430,7 +454,11 @@ public class CollabQuestMemberCommandServiceImpl implements CollabQuestMemberCom
     }
 
     private void deleteMemberProgress(Long userId, Long questId) {
-        var questUser = questUserRepository.findByUserIdAndQuestId(userId, questId);
+        var questUser = questUserRepository.findFirstByUserIdAndQuestIdAndStatusIn(
+                userId,
+                questId,
+                ACTIVE_QUEST_USER_STATUSES
+        );
         if (questUser.isEmpty()) {
             return;
         }

@@ -21,6 +21,9 @@ import pe.greenminds.ecomind_backend.shared.application.result.Result;
 
 @Service
 public class ActivityUserCommandServiceImpl implements ActivityUserCommandService {
+    private static final java.util.List<QuestStatus> ACTIVE_QUEST_USER_STATUSES =
+            java.util.List.of(QuestStatus.IN_PROGRESS, QuestStatus.READY_TO_COMPLETE);
+
     private final ActivityUserRepository activityUserRepository;
     private final ActivityRepository activityRepository;
     private final QuestUserRepository questUserRepository;
@@ -246,9 +249,10 @@ public class ActivityUserCommandServiceImpl implements ActivityUserCommandServic
         var synchronizedQuestUsers = new java.util.ArrayList<QuestUser>();
 
         for (var member : acceptedMembers) {
-            var questUser = questUserRepository.findByUserIdAndQuestId(
+            var questUser = questUserRepository.findFirstByUserIdAndQuestIdAndStatusIn(
                     member.getUserId(),
-                    session.get().getQuestId()
+                    session.get().getQuestId(),
+                    ACTIVE_QUEST_USER_STATUSES
             );
 
             if (questUser.isEmpty()

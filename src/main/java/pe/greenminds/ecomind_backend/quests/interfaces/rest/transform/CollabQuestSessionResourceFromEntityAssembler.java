@@ -3,8 +3,6 @@ package pe.greenminds.ecomind_backend.quests.interfaces.rest.transform;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.CollabQuestSession;
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.resources.CollabQuestSessionResource;
 
-import java.util.Locale;
-
 public final class CollabQuestSessionResourceFromEntityAssembler {
     private CollabQuestSessionResourceFromEntityAssembler() {
     }
@@ -20,7 +18,7 @@ public final class CollabQuestSessionResourceFromEntityAssembler {
                 collabQuestSession.getId(),
                 collabQuestSession.getQuestId(),
                 collabQuestSession.getOwnerId(),
-                collabQuestSession.getStatus().name().toLowerCase(Locale.ROOT),
+                collabQuestSession.getStatus().name(),
                 collabQuestSession.getCreatedAt(),
                 collabQuestSession.getStartDate(),
                 collabQuestSession.getEndDate()

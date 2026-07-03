@@ -7,6 +7,11 @@ import java.util.List;
 
 public record CollabQuestSessionState(
         CollabQuestSession session,
-        List<CollabQuestMember> members
+        List<CollabQuestMember> members,
+        CollabQuestMember currentMember,
+        CollabQuestMember pendingInvitation,
+        CollabQuestPermissions permissions,
+        CollabQuestCounters counters,
+        List<Long> unavailableUserIds
 ) {
 }
