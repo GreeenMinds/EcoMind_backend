@@ -12,6 +12,9 @@ public record CollabQuestSessionState(
         CollabQuestMember pendingInvitation,
         CollabQuestPermissions permissions,
         CollabQuestCounters counters,
-        List<Long> unavailableUserIds
+        List<Long> unavailableUserIds,
+        CollabQuestSource source,
+        Long familyPlanId,
+        Long familyPlanItemId
 ) {
 }
