@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import pe.greenminds.ecomind_backend.profile.application.commandservices.FriendCommandService;
 import pe.greenminds.ecomind_backend.profile.domain.model.aggregates.Friend;
 import pe.greenminds.ecomind_backend.profile.domain.model.commands.*;
+import pe.greenminds.ecomind_backend.profile.domain.model.valueobjects.FriendStatus;
 import pe.greenminds.ecomind_backend.profile.domain.repositories.FriendRepository;
 import pe.greenminds.ecomind_backend.profile.domain.repositories.UserRepository;
 import pe.greenminds.ecomind_backend.shared.application.result.ApplicationError;
@@ -44,6 +45,9 @@ public class FriendCommandServiceImpl implements FriendCommandService {
     public Result<Friend, ApplicationError> handle(AcceptFriendCommand command) {
         var friend = friendRepository.findById(command.friendRelationId());
         if (friend.isEmpty()) return Result.failure(ApplicationError.notFound("Friend", command.friendRelationId().toString()));
+        if (friend.get().getStatus() != FriendStatus.PENDING) {
+            return Result.failure(ApplicationError.businessRuleViolation("pending-friend-request", "Only pending friend requests can be accepted"));
+        }
         friend.get().accept();
         return Result.success(friendRepository.save(friend.get()));
     }
@@ -51,6 +55,9 @@ public class FriendCommandServiceImpl implements FriendCommandService {
     public Result<Friend, ApplicationError> handle(RejectFriendCommand command) {
         var friend = friendRepository.findById(command.friendRelationId());
         if (friend.isEmpty()) return Result.failure(ApplicationError.notFound("Friend", command.friendRelationId().toString()));
+        if (friend.get().getStatus() != FriendStatus.PENDING) {
+            return Result.failure(ApplicationError.businessRuleViolation("pending-friend-request", "Only pending friend requests can be rejected"));
+        }
         friend.get().reject();
         return Result.success(friendRepository.save(friend.get()));
     }
