@@ -4,5 +4,6 @@ public enum QuestType {
     COLLABORATIVE,
     MINIGAME,
     ACTIVITIES,
-    DAILY_QUEST
+    DAILY_QUEST,
+    FAMILY
 }

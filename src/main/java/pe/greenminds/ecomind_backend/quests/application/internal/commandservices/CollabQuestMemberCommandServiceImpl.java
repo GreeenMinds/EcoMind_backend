@@ -20,6 +20,7 @@ import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.MemberRole
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestStatus;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestMemberRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestSessionRepository;
+import pe.greenminds.ecomind_backend.quests.domain.repositories.FamilyPlanItemRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.ActivityUserRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestUserRepository;
 import pe.greenminds.ecomind_backend.shared.application.result.ApplicationError;
@@ -41,6 +42,7 @@ public class CollabQuestMemberCommandServiceImpl implements CollabQuestMemberCom
     private final FamilyUserRepository familyUserRepository;
     private final QuestUserRepository questUserRepository;
     private final ActivityUserRepository activityUserRepository;
+    private final FamilyPlanItemRepository familyPlanItemRepository;
 
     public CollabQuestMemberCommandServiceImpl(
             CollabQuestMemberRepository collabQuestMemberRepository,
@@ -49,7 +51,8 @@ public class CollabQuestMemberCommandServiceImpl implements CollabQuestMemberCom
             FriendRepository friendRepository,
             FamilyUserRepository familyUserRepository,
             QuestUserRepository questUserRepository,
-            ActivityUserRepository activityUserRepository
+            ActivityUserRepository activityUserRepository,
+            FamilyPlanItemRepository familyPlanItemRepository
     ) {
         this.collabQuestMemberRepository = collabQuestMemberRepository;
         this.collabQuestSessionRepository = collabQuestSessionRepository;
@@ -58,6 +61,7 @@ public class CollabQuestMemberCommandServiceImpl implements CollabQuestMemberCom
         this.familyUserRepository = familyUserRepository;
         this.questUserRepository = questUserRepository;
         this.activityUserRepository = activityUserRepository;
+        this.familyPlanItemRepository = familyPlanItemRepository;
     }
 
     @Override
@@ -68,6 +72,14 @@ public class CollabQuestMemberCommandServiceImpl implements CollabQuestMemberCom
         if (session.isEmpty()) {
             return Result.failure(
                     ApplicationError.notFound("CollabQuestSession", command.sessionId().toString())
+            );
+        }
+        if (isFamilyPlanSession(command.sessionId())) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Family plan sessions do not accept manual invitations",
+                            "Session %d belongs to a family plan".formatted(command.sessionId())
+                    )
             );
         }
 
@@ -218,6 +230,14 @@ public class CollabQuestMemberCommandServiceImpl implements CollabQuestMemberCom
                     )
             );
         }
+        if (isFamilyPlanSession(session.get().getId())) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Family plan invitations cannot be accepted manually",
+                            "Session %d belongs to a family plan".formatted(session.get().getId())
+                    )
+            );
+        }
 
         if (session.get().getStatus() != CollabQuestStatus.PENDING) {
             return Result.failure(
@@ -302,6 +322,14 @@ public class CollabQuestMemberCommandServiceImpl implements CollabQuestMemberCom
                     )
             );
         }
+        if (isFamilyPlanSession(member.getSessionId())) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Family plan invitations cannot be declined manually",
+                            "Session %d belongs to a family plan".formatted(member.getSessionId())
+                    )
+            );
+        }
 
         if (member.getStatus() != CollabMemberStatus.PENDING) {
             return Result.failure(
@@ -347,6 +375,14 @@ public class CollabQuestMemberCommandServiceImpl implements CollabQuestMemberCom
                     ApplicationError.notFound(
                             "CollabQuestSession",
                             member.getSessionId().toString()
+                    )
+            );
+        }
+        if (isFamilyPlanSession(session.get().getId())) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Family plan members cannot leave individually",
+                            "Session %d belongs to a family plan".formatted(session.get().getId())
                     )
             );
         }
@@ -412,6 +448,14 @@ public class CollabQuestMemberCommandServiceImpl implements CollabQuestMemberCom
                     ApplicationError.notFound(
                             "CollabQuestSession",
                             member.getSessionId().toString()
+                    )
+            );
+        }
+        if (isFamilyPlanSession(session.get().getId())) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Family plan members cannot be removed individually",
+                            "Session %d belongs to a family plan".formatted(session.get().getId())
                     )
             );
         }
@@ -506,5 +550,9 @@ public class CollabQuestMemberCommandServiceImpl implements CollabQuestMemberCom
                                 firstFamily.getFamilyId(),
                                 secondFamily.getFamilyId()
                         )));
+    }
+
+    private boolean isFamilyPlanSession(Long sessionId) {
+        return familyPlanItemRepository.existsByCollaborativeSessionId(sessionId);
     }
 }

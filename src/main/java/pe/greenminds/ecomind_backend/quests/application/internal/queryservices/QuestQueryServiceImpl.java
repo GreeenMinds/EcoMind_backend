@@ -6,6 +6,7 @@ import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.Quest;
 import pe.greenminds.ecomind_backend.quests.domain.model.queries.GetAllQuestsQuery;
 import pe.greenminds.ecomind_backend.quests.domain.model.queries.GetQuestByIdQuery;
 import pe.greenminds.ecomind_backend.quests.domain.model.queries.SearchQuestQuery;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestRepository;
 
 import java.util.List;
@@ -27,17 +28,26 @@ public class QuestQueryServiceImpl implements QuestQueryService {
 
     @Override
     public List<Quest> handle(GetAllQuestsQuery query) {
-        return questRepository.findAll();
+        return questRepository.findAll()
+                .stream()
+                .filter(quest -> quest.getType() != QuestType.FAMILY)
+                .toList();
     }
 
     @Override
     public List<Quest> handle(SearchQuestQuery query) {
-        return questRepository.search(
+        var quests = questRepository.search(
                 query.title(),
                 query.category(),
                 query.questType(),
                 query.age(),
                 query.type()
         );
+        if (query.questType() == null) {
+            return quests.stream()
+                    .filter(quest -> quest.getType() != QuestType.FAMILY)
+                    .toList();
+        }
+        return quests;
     }
 }
