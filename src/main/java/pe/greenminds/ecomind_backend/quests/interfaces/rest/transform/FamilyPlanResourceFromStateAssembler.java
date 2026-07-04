@@ -26,7 +26,6 @@ public final class FamilyPlanResourceFromStateAssembler {
         return new FamilyPlanItemResource(
                 state.id(),
                 state.questId(),
-                state.startDate(),
                 state.collaborativeSessionId(),
                 state.progress()
         );

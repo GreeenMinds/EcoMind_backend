@@ -5,8 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import pe.greenminds.ecomind_backend.shared.infrastructure.persistence.jpa.entities.AuditableAbstractPersistenceEntity;
 
-import java.time.OffsetDateTime;
-
 @Entity
 @Table(name = "family_plan_items")
 public class FamilyPlanItemPersistenceEntity extends AuditableAbstractPersistenceEntity {
@@ -16,9 +14,6 @@ public class FamilyPlanItemPersistenceEntity extends AuditableAbstractPersistenc
     @Column(name = "quest_id", nullable = false)
     private Long questId;
 
-    @Column(name = "start_date")
-    private OffsetDateTime startDate;
-
     @Column(name = "collaborative_session_id")
     private Long collaborativeSessionId;
 
@@ -26,8 +21,6 @@ public class FamilyPlanItemPersistenceEntity extends AuditableAbstractPersistenc
     public void setFamilyPlanId(Long familyPlanId) { this.familyPlanId = familyPlanId; }
     public Long getQuestId() { return questId; }
     public void setQuestId(Long questId) { this.questId = questId; }
-    public OffsetDateTime getStartDate() { return startDate; }
-    public void setStartDate(OffsetDateTime startDate) { this.startDate = startDate; }
     public Long getCollaborativeSessionId() { return collaborativeSessionId; }
     public void setCollaborativeSessionId(Long collaborativeSessionId) {
         this.collaborativeSessionId = collaborativeSessionId;

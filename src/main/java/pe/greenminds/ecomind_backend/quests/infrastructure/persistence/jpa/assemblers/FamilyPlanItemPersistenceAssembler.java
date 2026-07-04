@@ -12,7 +12,6 @@ public final class FamilyPlanItemPersistenceAssembler {
                 entity.getId(),
                 entity.getFamilyPlanId(),
                 entity.getQuestId(),
-                entity.getStartDate(),
                 entity.getCollaborativeSessionId()
         );
     }
@@ -24,7 +23,6 @@ public final class FamilyPlanItemPersistenceAssembler {
         entity.setId(familyPlanItem.getId());
         entity.setFamilyPlanId(familyPlanItem.getFamilyPlanId());
         entity.setQuestId(familyPlanItem.getQuestId());
-        entity.setStartDate(familyPlanItem.getStartDate());
         entity.setCollaborativeSessionId(familyPlanItem.getCollaborativeSessionId());
         return entity;
     }

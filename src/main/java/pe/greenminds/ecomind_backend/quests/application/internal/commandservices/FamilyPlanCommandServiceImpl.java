@@ -2,10 +2,12 @@ package pe.greenminds.ecomind_backend.quests.application.internal.commandservice
 
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import pe.greenminds.ecomind_backend.monetization.domain.model.valueobjects.MovementOrigin;
 import pe.greenminds.ecomind_backend.profile.domain.model.valueobjects.FamilyRole;
 import pe.greenminds.ecomind_backend.profile.domain.repositories.FamilyUserRepository;
 import pe.greenminds.ecomind_backend.quests.application.commandservices.FamilyPlanCommandService;
 import pe.greenminds.ecomind_backend.quests.application.internal.queryservices.FamilyPlanStateAssembler;
+import pe.greenminds.ecomind_backend.quests.application.internal.services.QuestRewardService;
 import pe.greenminds.ecomind_backend.quests.application.queryservices.FamilyPlanState;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.ActivityUser;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.CollabQuestMember;
@@ -14,6 +16,7 @@ import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.FamilyPlan;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.FamilyPlanItem;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.QuestUser;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.ActivateFamilyPlanCommand;
+import pe.greenminds.ecomind_backend.quests.domain.model.commands.CompleteFamilyPlanCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.CreateFamilyPlanCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.DeleteFamilyPlanCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.FamilyPlanItemCommand;
@@ -52,6 +55,7 @@ public class FamilyPlanCommandServiceImpl implements FamilyPlanCommandService {
     private final QuestUserRepository questUserRepository;
     private final ActivityUserRepository activityUserRepository;
     private final FamilyPlanStateAssembler familyPlanStateAssembler;
+    private final QuestRewardService questRewardService;
 
     public FamilyPlanCommandServiceImpl(
             FamilyPlanRepository familyPlanRepository,
@@ -63,7 +67,8 @@ public class FamilyPlanCommandServiceImpl implements FamilyPlanCommandService {
             CollabQuestMemberRepository collabQuestMemberRepository,
             QuestUserRepository questUserRepository,
             ActivityUserRepository activityUserRepository,
-            FamilyPlanStateAssembler familyPlanStateAssembler
+            FamilyPlanStateAssembler familyPlanStateAssembler,
+            QuestRewardService questRewardService
     ) {
         this.familyPlanRepository = familyPlanRepository;
         this.familyPlanItemRepository = familyPlanItemRepository;
@@ -75,6 +80,7 @@ public class FamilyPlanCommandServiceImpl implements FamilyPlanCommandService {
         this.questUserRepository = questUserRepository;
         this.activityUserRepository = activityUserRepository;
         this.familyPlanStateAssembler = familyPlanStateAssembler;
+        this.questRewardService = questRewardService;
     }
 
     @Transactional
@@ -93,7 +99,7 @@ public class FamilyPlanCommandServiceImpl implements FamilyPlanCommandService {
                 new FamilyPlan(command.familyId(), command.ownerUserId())
         );
         command.items().forEach(item -> familyPlanItemRepository.save(
-                new FamilyPlanItem(plan.getId(), item.questId(), item.startDate())
+                new FamilyPlanItem(plan.getId(), item.questId())
         ));
 
         return Result.success(familyPlanStateAssembler.toState(plan));
@@ -127,7 +133,7 @@ public class FamilyPlanCommandServiceImpl implements FamilyPlanCommandService {
 
         familyPlanItemRepository.deleteByFamilyPlanId(plan.get().getId());
         command.items().forEach(item -> familyPlanItemRepository.save(
-                new FamilyPlanItem(plan.get().getId(), item.questId(), item.startDate())
+                new FamilyPlanItem(plan.get().getId(), item.questId())
         ));
 
         return Result.success(familyPlanStateAssembler.toState(plan.get()));
@@ -177,6 +183,9 @@ public class FamilyPlanCommandServiceImpl implements FamilyPlanCommandService {
                         item.getQuestId(),
                         ACTIVE_QUEST_USER_STATUSES
                 )) {
+                    if (!hasBlockingActiveQuest(familyMember.getUserId(), item.getQuestId())) {
+                        continue;
+                    }
                     return Result.failure(ApplicationError.conflict(
                             "QuestUser",
                             "User %d already has quest %d active".formatted(
@@ -239,6 +248,52 @@ public class FamilyPlanCommandServiceImpl implements FamilyPlanCommandService {
 
     @Transactional
     @Override
+    public Result<FamilyPlanState, ApplicationError> handle(CompleteFamilyPlanCommand command) {
+        var plan = familyPlanRepository.findById(command.familyPlanId());
+        if (plan.isEmpty()) {
+            return Result.failure(ApplicationError.notFound(
+                    "FamilyPlan",
+                    command.familyPlanId().toString()
+            ));
+        }
+        if (plan.get().getStatus() != FamilyPlanStatus.ACTIVE) {
+            return Result.failure(ApplicationError.businessRuleViolation(
+                    "Only active family plans can be completed",
+                    "FamilyPlan %d is %s".formatted(command.familyPlanId(), plan.get().getStatus())
+            ));
+        }
+        if (!plan.get().getOwnerUserId().equals(command.ownerUserId())) {
+            return Result.failure(ApplicationError.businessRuleViolation(
+                    "Only the family plan owner can complete the plan",
+                    "User %d is not owner of FamilyPlan %d".formatted(
+                            command.ownerUserId(),
+                            command.familyPlanId()
+                    )
+            ));
+        }
+
+        var items = familyPlanItemRepository.findByFamilyPlanId(command.familyPlanId());
+        if (items.isEmpty()) {
+            return Result.failure(ApplicationError.businessRuleViolation(
+                    "Family plan must have at least one item",
+                    "FamilyPlan %d has no items".formatted(command.familyPlanId())
+            ));
+        }
+
+        for (var item : items) {
+            var result = completeFamilyPlanItem(item);
+            if (result != null) {
+                return Result.failure(result);
+            }
+        }
+
+        plan.get().complete();
+        var savedPlan = familyPlanRepository.save(plan.get());
+        return Result.success(familyPlanStateAssembler.toState(savedPlan));
+    }
+
+    @Transactional
+    @Override
     public Result<FamilyPlanState, ApplicationError> handle(DeleteFamilyPlanCommand command) {
         var plan = familyPlanRepository.findById(command.familyPlanId());
         if (plan.isEmpty()) {
@@ -262,16 +317,17 @@ public class FamilyPlanCommandServiceImpl implements FamilyPlanCommandService {
         }
 
         familyPlanItemRepository.findByFamilyPlanId(plan.get().getId())
-                .stream()
-                .map(FamilyPlanItem::getCollaborativeSessionId)
-                .filter(java.util.Objects::nonNull)
-                .map(collabQuestSessionRepository::findById)
-                .filter(java.util.Optional::isPresent)
-                .map(java.util.Optional::get)
-                .filter(session -> session.getStatus() == CollabQuestStatus.STARTED)
-                .forEach(session -> {
-                    session.cancel();
-                    collabQuestSessionRepository.save(session);
+                .forEach(item -> {
+                    cleanupFamilyPlanItemProgress(item);
+                    if (item.getCollaborativeSessionId() == null) {
+                        return;
+                    }
+                    collabQuestSessionRepository.findById(item.getCollaborativeSessionId())
+                            .filter(session -> session.getStatus() == CollabQuestStatus.STARTED)
+                            .ifPresent(session -> {
+                                session.cancel();
+                                collabQuestSessionRepository.save(session);
+                            });
                 });
 
         plan.get().cancel();
@@ -284,13 +340,6 @@ public class FamilyPlanCommandServiceImpl implements FamilyPlanCommandService {
             Long ownerUserId,
             List<FamilyPlanItemCommand> items
     ) {
-        if (items == null || items.isEmpty()) {
-            return ApplicationError.businessRuleViolation(
-                    "Family plan must have at least one item",
-                    "items is empty"
-            );
-        }
-
         var ownerMembership = familyUserRepository.findByFamilyId(familyId)
                 .stream()
                 .filter(member -> member.getUserId().equals(ownerUserId))
@@ -308,7 +357,8 @@ public class FamilyPlanCommandServiceImpl implements FamilyPlanCommandService {
             );
         }
 
-        for (var item : items) {
+        var requestedItems = items == null ? List.<FamilyPlanItemCommand>of() : items;
+        for (var item : requestedItems) {
             var validation = validateFamilyQuest(item.questId());
             if (validation != null) {
                 return validation;
@@ -335,5 +385,123 @@ public class FamilyPlanCommandServiceImpl implements FamilyPlanCommandService {
             );
         }
         return null;
+    }
+
+    private ApplicationError completeFamilyPlanItem(FamilyPlanItem item) {
+        if (item.getCollaborativeSessionId() == null) {
+            return ApplicationError.businessRuleViolation(
+                    "Family plan item has no collaborative session",
+                    "FamilyPlanItem %d is not activated".formatted(item.getId())
+            );
+        }
+
+        var session = collabQuestSessionRepository.findById(item.getCollaborativeSessionId());
+        if (session.isEmpty()) {
+            return ApplicationError.notFound(
+                    "CollabQuestSession",
+                    item.getCollaborativeSessionId().toString()
+            );
+        }
+
+        if (session.get().getStatus() == CollabQuestStatus.COMPLETED) {
+            return null;
+        }
+        if (session.get().getStatus() != CollabQuestStatus.STARTED) {
+            return ApplicationError.businessRuleViolation(
+                    "Family plan item session must be started or completed",
+                    "Session %d is %s".formatted(session.get().getId(), session.get().getStatus())
+            );
+        }
+
+        var questUsers = questUserRepository.findByQuestId(item.getQuestId())
+                .stream()
+                .filter(questUser -> session.get().getId().equals(
+                        questUser.getCollaborativeSessionId()
+                ))
+                .toList();
+        if (questUsers.isEmpty()) {
+            return ApplicationError.notFound(
+                    "QuestUser",
+                    "questId=%d, collaborativeSessionId=%d".formatted(
+                            item.getQuestId(),
+                            session.get().getId()
+                    )
+            );
+        }
+
+        var notReady = questUsers.stream()
+                .filter(questUser -> questUser.getStatus() != QuestStatus.READY_TO_COMPLETE
+                        && questUser.getStatus() != QuestStatus.COMPLETED)
+                .findFirst();
+        if (notReady.isPresent()) {
+            return ApplicationError.businessRuleViolation(
+                    "Family plan item is not ready to complete",
+                    "QuestUser %d is %s with progress %.2f".formatted(
+                            notReady.get().getId(),
+                            notReady.get().getStatus(),
+                            notReady.get().getProgress()
+                    )
+            );
+        }
+
+        var quest = questRepository.findById(item.getQuestId());
+        if (quest.isEmpty()) {
+            return ApplicationError.notFound("Quest", item.getQuestId().toString());
+        }
+
+        for (var questUser : questUsers) {
+            if (questUser.getStatus() == QuestStatus.COMPLETED) {
+                continue;
+            }
+            questUser.complete();
+            var savedQuestUser = questUserRepository.save(questUser);
+            questRewardService.grantRewards(
+                    savedQuestUser.getUserId(),
+                    quest.get().getGems(),
+                    quest.get().getEcopoints(),
+                    MovementOrigin.QUEST,
+                    session.get().getId()
+            );
+        }
+
+        session.get().complete();
+        collabQuestSessionRepository.save(session.get());
+        return null;
+    }
+
+    private boolean hasBlockingActiveQuest(Long userId, Long questId) {
+        return questUserRepository.findByQuestIdAndStatusIn(questId, ACTIVE_QUEST_USER_STATUSES)
+                .stream()
+                .filter(questUser -> questUser.getUserId().equals(userId))
+                .anyMatch(this::isBlockingActiveQuestUser);
+    }
+
+    private boolean isBlockingActiveQuestUser(QuestUser questUser) {
+        if (questUser.getCollaborativeSessionId() == null) {
+            return true;
+        }
+
+        var session = collabQuestSessionRepository.findById(questUser.getCollaborativeSessionId());
+        return session
+                .map(value -> value.getStatus() == CollabQuestStatus.PENDING
+                        || value.getStatus() == CollabQuestStatus.STARTED)
+                .orElse(true);
+    }
+
+    private void cleanupFamilyPlanItemProgress(FamilyPlanItem item) {
+        if (item.getCollaborativeSessionId() == null) {
+            return;
+        }
+
+        questUserRepository.findByQuestId(item.getQuestId())
+                .stream()
+                .filter(questUser -> item.getCollaborativeSessionId().equals(
+                        questUser.getCollaborativeSessionId()
+                ))
+                .filter(questUser -> questUser.getStatus() != QuestStatus.COMPLETED)
+                .forEach(questUser -> {
+                    activityUserRepository.deleteByQuestUserId(questUser.getId());
+                    questUserRepository.deleteById(questUser.getId());
+                });
     }
 }

@@ -318,7 +318,7 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
                 grantQuestUserReward(
                         questUser,
                         quest.get(),
-                        MovementOrigin.COLLAB_QUEST,
+                        MovementOrigin.QUEST,
                         savedSession.getId()
                 );
             }

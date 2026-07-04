@@ -41,6 +41,13 @@ public class FamilyPlan extends AbstractDomainAggregateRoot<FamilyPlan> {
         status = FamilyPlanStatus.CANCELLED;
     }
 
+    public void complete() {
+        if (status != FamilyPlanStatus.ACTIVE) {
+            throw new IllegalStateException("Family plan must be ACTIVE");
+        }
+        status = FamilyPlanStatus.COMPLETED;
+    }
+
     public Long getFamilyId() { return familyId; }
     public Long getOwnerUserId() { return ownerUserId; }
     public FamilyPlanStatus getStatus() { return status; }

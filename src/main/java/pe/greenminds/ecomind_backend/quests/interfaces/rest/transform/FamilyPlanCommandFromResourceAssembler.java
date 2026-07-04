@@ -7,6 +7,8 @@ import pe.greenminds.ecomind_backend.quests.interfaces.rest.resources.CreateFami
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.resources.FamilyPlanItemRequestResource;
 import pe.greenminds.ecomind_backend.quests.interfaces.rest.resources.UpdateFamilyPlanResource;
 
+import java.util.List;
+
 public final class FamilyPlanCommandFromResourceAssembler {
     private FamilyPlanCommandFromResourceAssembler() {
     }
@@ -17,7 +19,7 @@ public final class FamilyPlanCommandFromResourceAssembler {
         return new CreateFamilyPlanCommand(
                 resource.familyId(),
                 resource.ownerUserId(),
-                resource.items().stream()
+                safeItems(resource.items()).stream()
                         .map(FamilyPlanCommandFromResourceAssembler::toItemCommand)
                         .toList()
         );
@@ -29,15 +31,21 @@ public final class FamilyPlanCommandFromResourceAssembler {
     ) {
         return new UpdateFamilyPlanCommand(
                 familyPlanId,
-                resource.items().stream()
+                safeItems(resource.items()).stream()
                         .map(FamilyPlanCommandFromResourceAssembler::toItemCommand)
                         .toList()
         );
     }
 
+    private static List<FamilyPlanItemRequestResource> safeItems(
+            List<FamilyPlanItemRequestResource> items
+    ) {
+        return items == null ? List.of() : items;
+    }
+
     private static FamilyPlanItemCommand toItemCommand(
             FamilyPlanItemRequestResource resource
     ) {
-        return new FamilyPlanItemCommand(resource.questId(), resource.startDate());
+        return new FamilyPlanItemCommand(resource.questId());
     }
 }

@@ -46,7 +46,6 @@ public class FamilyPlanStateAssembler {
         return new FamilyPlanItemState(
                 item.getId(),
                 item.getQuestId(),
-                item.getStartDate(),
                 item.getCollaborativeSessionId(),
                 calculateProgress(item)
         );

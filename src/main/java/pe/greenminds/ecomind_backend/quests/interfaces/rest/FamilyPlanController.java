@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import pe.greenminds.ecomind_backend.quests.application.commandservices.FamilyPlanCommandService;
 import pe.greenminds.ecomind_backend.quests.application.queryservices.FamilyPlanQueryService;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.ActivateFamilyPlanCommand;
+import pe.greenminds.ecomind_backend.quests.domain.model.commands.CompleteFamilyPlanCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.commands.DeleteFamilyPlanCommand;
 import pe.greenminds.ecomind_backend.quests.domain.model.queries.GetActiveFamilyPlanByFamilyIdQuery;
 import pe.greenminds.ecomind_backend.quests.domain.model.queries.GetFamilyPlanByIdQuery;
@@ -129,6 +130,22 @@ public class FamilyPlanController {
     public ResponseEntity<?> activateFamilyPlan(@PathVariable Long familyPlanId) {
         var result = familyPlanCommandService.handle(
                 new ActivateFamilyPlanCommand(familyPlanId)
+        );
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                FamilyPlanResourceFromStateAssembler::toResourceFromState,
+                HttpStatus.OK
+        );
+    }
+
+    @PostMapping("/{familyPlanId}/complete")
+    @Operation(summary = "Complete an active family plan")
+    public ResponseEntity<?> completeFamilyPlan(
+            @PathVariable Long familyPlanId,
+            @RequestParam Long ownerUserId
+    ) {
+        var result = familyPlanCommandService.handle(
+                new CompleteFamilyPlanCommand(familyPlanId, ownerUserId)
         );
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result,
