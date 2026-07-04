@@ -49,9 +49,20 @@ public class EventCommandServiceImpl implements EventCommandService {
     @Override
     public Result<Void, ApplicationError> handle(DeleteEventCommand command) {
         try {
-            if (!eventRepository.existsById(command.id())) {
+            var event = eventRepository.findById(command.id());
+
+            if (event.isEmpty()) {
                 return Result.failure(
                         ApplicationError.notFound("Event", command.id().toString())
+                );
+            }
+
+            if (!event.get().getAuthorId().equals(command.authorId())) {
+                return Result.failure(
+                        ApplicationError.businessRuleViolation(
+                                "Event deletion ownership",
+                                "Only the author can delete this event"
+                        )
                 );
             }
 
