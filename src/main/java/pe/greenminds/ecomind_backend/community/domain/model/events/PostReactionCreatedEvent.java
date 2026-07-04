@@ -7,17 +7,15 @@ import java.time.LocalDateTime;
 public record PostReactionCreatedEvent(
         Long postReactionId,
         Long postId,
-        Long userId,
-        LocalDateTime createdAt,
-        LocalDateTime occurredOn
+        Long reactorUserId,
+        LocalDateTime createdAt
 ) {
     public static PostReactionCreatedEvent from(PostReaction postReaction) {
         return new PostReactionCreatedEvent(
                 postReaction.getId(),
                 postReaction.getPostId(),
                 postReaction.getUserId(),
-                postReaction.getCreatedAt(),
-                LocalDateTime.now()
+                postReaction.getCreatedAt()
         );
     }
 }
