@@ -48,7 +48,10 @@ public final class CollabQuestSessionStateResourceAssembler {
                         state.counters().activeInvites(),
                         state.counters().maxInvites()
                 ),
-                state.unavailableUserIds()
+                state.unavailableUserIds(),
+                state.source(),
+                state.familyPlanId(),
+                state.familyPlanItemId()
         );
     }
 }

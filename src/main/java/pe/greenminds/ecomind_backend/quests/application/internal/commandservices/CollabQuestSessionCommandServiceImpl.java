@@ -15,6 +15,7 @@ import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.MemberRole
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestStatus;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestMemberRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestSessionRepository;
+import pe.greenminds.ecomind_backend.quests.domain.repositories.FamilyPlanItemRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestUserRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.ActivityRepository;
@@ -40,6 +41,7 @@ public class CollabQuestSessionCommandServiceImpl implements CollabQuestSessionC
     private final QuestUserRepository questUserRepository;
     private final ActivityRepository activityRepository;
     private final ActivityUserRepository activityUserRepository;
+    private final FamilyPlanItemRepository familyPlanItemRepository;
 
     public CollabQuestSessionCommandServiceImpl(
             CollabQuestSessionRepository collabQuestSessionRepository,
@@ -47,7 +49,8 @@ public class CollabQuestSessionCommandServiceImpl implements CollabQuestSessionC
             QuestRepository questRepository,
             QuestUserRepository questUserRepository,
             ActivityRepository activityRepository,
-            ActivityUserRepository activityUserRepository
+            ActivityUserRepository activityUserRepository,
+            FamilyPlanItemRepository familyPlanItemRepository
     ) {
         this.collabQuestSessionRepository = collabQuestSessionRepository;
         this.collabQuestMemberRepository = collabQuestMemberRepository;
@@ -55,6 +58,7 @@ public class CollabQuestSessionCommandServiceImpl implements CollabQuestSessionC
         this.questUserRepository = questUserRepository;
         this.activityRepository = activityRepository;
         this.activityUserRepository = activityUserRepository;
+        this.familyPlanItemRepository = familyPlanItemRepository;
     }
 
     @Transactional
@@ -280,6 +284,14 @@ public class CollabQuestSessionCommandServiceImpl implements CollabQuestSessionC
                                     command.ownerUserId(),
                                     command.sessionId()
                             )
+                    )
+            );
+        }
+        if (familyPlanItemRepository.existsByCollaborativeSessionId(command.sessionId())) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Family plan sessions cannot be deleted directly",
+                            "Cancel the family plan instead"
                     )
             );
         }

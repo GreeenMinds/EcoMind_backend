@@ -3,6 +3,7 @@ package pe.greenminds.ecomind_backend.quests.application.internal.queryservices;
 import org.springframework.stereotype.Service;
 import pe.greenminds.ecomind_backend.quests.application.queryservices.CollabQuestCounters;
 import pe.greenminds.ecomind_backend.quests.application.queryservices.CollabQuestPermissions;
+import pe.greenminds.ecomind_backend.quests.application.queryservices.CollabQuestSource;
 import pe.greenminds.ecomind_backend.quests.application.queryservices.CollabQuestSessionQueryService;
 import pe.greenminds.ecomind_backend.quests.application.queryservices.CollabQuestSessionState;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.CollabQuestMember;
@@ -16,6 +17,7 @@ import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.ActivityRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestSessionRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.CollabQuestMemberRepository;
+import pe.greenminds.ecomind_backend.quests.domain.repositories.FamilyPlanItemRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestUserRepository;
 
@@ -36,19 +38,22 @@ public class CollabQuestSessionQueryServiceImpl implements CollabQuestSessionQue
     private final QuestUserRepository questUserRepository;
     private final ActivityRepository activityRepository;
     private final QuestRepository questRepository;
+    private final FamilyPlanItemRepository familyPlanItemRepository;
 
     public CollabQuestSessionQueryServiceImpl(
             CollabQuestSessionRepository collabQuestSessionRepository,
             CollabQuestMemberRepository collabQuestMemberRepository,
             QuestUserRepository questUserRepository,
             ActivityRepository activityRepository,
-            QuestRepository questRepository
+            QuestRepository questRepository,
+            FamilyPlanItemRepository familyPlanItemRepository
     ) {
         this.collabQuestSessionRepository = collabQuestSessionRepository;
         this.collabQuestMemberRepository = collabQuestMemberRepository;
         this.questUserRepository = questUserRepository;
         this.activityRepository = activityRepository;
         this.questRepository = questRepository;
+        this.familyPlanItemRepository = familyPlanItemRepository;
     }
 
     @Override
@@ -87,6 +92,9 @@ public class CollabQuestSessionQueryServiceImpl implements CollabQuestSessionQue
                 counters
         );
         var unavailableUserIds = findUnavailableUserIds(query.questId());
+        var familyPlanItem = session == null
+                ? java.util.Optional.<pe.greenminds.ecomind_backend.quests.domain.model.aggregates.FamilyPlanItem>empty()
+                : familyPlanItemRepository.findByCollaborativeSessionId(session.getId());
 
         return new CollabQuestSessionState(
                 session,
@@ -95,7 +103,14 @@ public class CollabQuestSessionQueryServiceImpl implements CollabQuestSessionQue
                 pendingInvitation,
                 permissions,
                 counters,
-                unavailableUserIds
+                unavailableUserIds,
+                familyPlanItem.isPresent()
+                        ? CollabQuestSource.FAMILY_PLAN
+                        : CollabQuestSource.COLLABORATIVE,
+                familyPlanItem.map(pe.greenminds.ecomind_backend.quests.domain.model.aggregates.FamilyPlanItem::getFamilyPlanId)
+                        .orElse(null),
+                familyPlanItem.map(pe.greenminds.ecomind_backend.quests.domain.model.aggregates.FamilyPlanItem::getId)
+                        .orElse(null)
         );
     }
 
@@ -180,6 +195,9 @@ public class CollabQuestSessionQueryServiceImpl implements CollabQuestSessionQue
 
         var isOwner = Objects.equals(session.getOwnerId(), query.userId());
         var isPendingSession = session.getStatus() == CollabQuestStatus.PENDING;
+        var isFamilyPlanSession = familyPlanItemRepository.existsByCollaborativeSessionId(
+                session.getId()
+        );
         var userHasQuestUser = questUserRepository
                 .findFirstByUserIdAndQuestIdAndStatusIn(
                         query.userId(),
@@ -190,6 +208,7 @@ public class CollabQuestSessionQueryServiceImpl implements CollabQuestSessionQue
 
         var canInvite = isOwner
                 && isPendingSession
+                && !isFamilyPlanSession
                 && !userHasQuestUser
                 && counters.activeInvites() < counters.maxInvites();
 
@@ -208,14 +227,14 @@ public class CollabQuestSessionQueryServiceImpl implements CollabQuestSessionQue
                 && currentMember.getStatus() == CollabMemberStatus.ACCEPTED
                 && (isPendingSession || session.getStatus() == CollabQuestStatus.STARTED);
 
-        var canRemoveMembers = isOwner && isPendingSession;
-        var canDeleteSession = isOwner && isPendingSession;
+        var canRemoveMembers = isOwner && isPendingSession && !isFamilyPlanSession;
+        var canDeleteSession = isOwner && isPendingSession && !isFamilyPlanSession;
 
         return new CollabQuestPermissions(
                 canInvite,
                 canStart,
                 canAcceptInvitation,
-                canLeave,
+                isFamilyPlanSession ? false : canLeave,
                 canRemoveMembers,
                 canDeleteSession
         );

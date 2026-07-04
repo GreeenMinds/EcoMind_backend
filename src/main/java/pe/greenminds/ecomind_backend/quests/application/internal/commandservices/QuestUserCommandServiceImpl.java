@@ -75,6 +75,16 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
             );
         }
 
+        if (quest.get().getType() == QuestType.FAMILY) {
+            return Result.failure(
+                    ApplicationError.businessRuleViolation(
+                            "Family quests must be started with a family plan",
+                            "Activate a FamilyPlan for quest %d instead of creating a QuestUser"
+                                    .formatted(command.questId())
+                    )
+            );
+        }
+
         if (activityRepository.countByQuestId(command.questId()) < 1) {
             return Result.failure(
                     ApplicationError.businessRuleViolation(
@@ -308,7 +318,7 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
                 grantQuestUserReward(
                         questUser,
                         quest.get(),
-                        MovementOrigin.COLLAB_QUEST,
+                        MovementOrigin.QUEST,
                         savedSession.getId()
                 );
             }
