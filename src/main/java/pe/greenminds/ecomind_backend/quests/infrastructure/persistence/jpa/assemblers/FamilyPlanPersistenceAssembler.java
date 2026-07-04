@@ -12,7 +12,8 @@ public final class FamilyPlanPersistenceAssembler {
                 entity.getId(),
                 entity.getFamilyId(),
                 entity.getOwnerUserId(),
-                entity.getStatus()
+                entity.getStatus(),
+                entity.getCompletedAt()
         );
     }
 
@@ -22,6 +23,7 @@ public final class FamilyPlanPersistenceAssembler {
         entity.setFamilyId(familyPlan.getFamilyId());
         entity.setOwnerUserId(familyPlan.getOwnerUserId());
         entity.setStatus(familyPlan.getStatus());
+        entity.setCompletedAt(familyPlan.getCompletedAt());
         return entity;
     }
 }
