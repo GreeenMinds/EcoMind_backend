@@ -74,13 +74,14 @@ public class TutorialProgressCommandServiceImpl implements TutorialProgressComma
     public Result<TutorialProgress, ApplicationError> handle(SkipTutorialCommand command) {
         try {
             var existing = tutorialProgressRepository.findByUserId(command.userId());
+            TutorialProgress progress;
             if (existing.isEmpty()) {
-                return Result.failure(
-                        ApplicationError.notFound("TutorialProgress", command.userId().toString())
-                );
+                progress = new TutorialProgress(command.userId(), DEFAULT_TOTAL_STEPS, DEFAULT_TOTAL_STEPS, false, false, null);
+                progress.skip();
+            } else {
+                progress = existing.get();
+                progress.skip();
             }
-            var progress = existing.get();
-            progress.skip();
             return Result.success(tutorialProgressRepository.save(progress));
         } catch (Exception e) {
             return Result.failure(
