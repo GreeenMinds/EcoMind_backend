@@ -1,6 +1,7 @@
 package pe.greenminds.ecomind_backend.quests.application.internal.queryservices;
 
 import org.springframework.stereotype.Service;
+import pe.greenminds.ecomind_backend.quests.application.internal.services.DailyQuestLifecycleService;
 import pe.greenminds.ecomind_backend.quests.application.queryservices.QuestUserQueryService;
 import pe.greenminds.ecomind_backend.quests.application.queryservices.QuestUserVersionStatus;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.ActivityUser;
@@ -26,35 +27,47 @@ public class QuestUserQueryServiceImpl implements QuestUserQueryService {
     private final QuestUserRepository questUserRepository;
     private final ActivityRepository activityRepository;
     private final ActivityUserRepository activityUserRepository;
+    private final DailyQuestLifecycleService dailyQuestLifecycleService;
 
     public QuestUserQueryServiceImpl(
             QuestUserRepository questUserRepository,
             ActivityRepository activityRepository,
-            ActivityUserRepository activityUserRepository
+            ActivityUserRepository activityUserRepository,
+            DailyQuestLifecycleService dailyQuestLifecycleService
     ) {
         this.questUserRepository = questUserRepository;
         this.activityRepository = activityRepository;
         this.activityUserRepository = activityUserRepository;
+        this.dailyQuestLifecycleService = dailyQuestLifecycleService;
     }
 
     @Override
     public Optional<QuestUser> handle(GetQuestUserByIdQuery query) {
+        var questUser = questUserRepository.findById(query.id());
+        questUser.ifPresent(value -> dailyQuestLifecycleService.expireOpenDailyQuestsForUser(value.getUserId()));
         return questUserRepository.findById(query.id());
     }
 
     @Override
     public Optional<QuestUser> handle(GetQuestUserByUserIdAndQuestIdQuery query) {
+        dailyQuestLifecycleService.expireOpenDailyQuestsForUser(query.userId());
         return questUserRepository.findByUserIdAndQuestId(query.userId(), query.questId());
     }
 
     @Override
     public List<QuestUser> handle(GetQuestUsersByUserIdAndStatusQuery query) {
+        dailyQuestLifecycleService.expireOpenDailyQuestsForUser(query.userId());
         return questUserRepository.findByUserIdAndStatus(query.userId(), query.status());
     }
 
     @Override
     public Optional<QuestUserVersionStatus> handle(GetQuestUserVersionStatusQuery query) {
         var questUser = questUserRepository.findById(query.questUserId());
+        if (questUser.isEmpty()) {
+            return Optional.empty();
+        }
+        dailyQuestLifecycleService.expireOpenDailyQuestsForUser(questUser.get().getUserId());
+        questUser = questUserRepository.findById(query.questUserId());
         if (questUser.isEmpty()) {
             return Optional.empty();
         }

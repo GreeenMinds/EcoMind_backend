@@ -3,6 +3,7 @@ package pe.greenminds.ecomind_backend.quests.application.internal.commandservice
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.greenminds.ecomind_backend.quests.application.commandservices.ActivityUserCommandService;
+import pe.greenminds.ecomind_backend.quests.application.internal.services.DailyQuestLifecycleService;
 import pe.greenminds.ecomind_backend.quests.application.internal.submission.ActivitySubmissionHandlerRegistry;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.ActivityUser;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.QuestUser;
@@ -30,6 +31,7 @@ public class ActivityUserCommandServiceImpl implements ActivityUserCommandServic
     private final CollabQuestSessionRepository collabQuestSessionRepository;
     private final CollabQuestMemberRepository collabQuestMemberRepository;
     private final ActivitySubmissionHandlerRegistry submissionHandlerRegistry;
+    private final DailyQuestLifecycleService dailyQuestLifecycleService;
 
     public ActivityUserCommandServiceImpl(
             ActivityUserRepository activityUserRepository,
@@ -37,7 +39,8 @@ public class ActivityUserCommandServiceImpl implements ActivityUserCommandServic
             QuestUserRepository questUserRepository,
             CollabQuestSessionRepository collabQuestSessionRepository,
             CollabQuestMemberRepository collabQuestMemberRepository,
-            ActivitySubmissionHandlerRegistry submissionHandlerRegistry
+            ActivitySubmissionHandlerRegistry submissionHandlerRegistry,
+            DailyQuestLifecycleService dailyQuestLifecycleService
     ) {
         this.activityUserRepository = activityUserRepository;
         this.activityRepository = activityRepository;
@@ -45,6 +48,7 @@ public class ActivityUserCommandServiceImpl implements ActivityUserCommandServic
         this.collabQuestSessionRepository = collabQuestSessionRepository;
         this.collabQuestMemberRepository = collabQuestMemberRepository;
         this.submissionHandlerRegistry = submissionHandlerRegistry;
+        this.dailyQuestLifecycleService = dailyQuestLifecycleService;
     }
 
     @Override
@@ -118,6 +122,16 @@ public class ActivityUserCommandServiceImpl implements ActivityUserCommandServic
         }
 
         var questUser = questUserRepository.findById(activityUser.get().getQuestUserId());
+        if (questUser.isEmpty()) {
+            return Result.failure(
+                    ApplicationError.notFound(
+                            "QuestUser",
+                            activityUser.get().getQuestUserId().toString()
+                    )
+            );
+        }
+        dailyQuestLifecycleService.expireOpenDailyQuestsForUser(questUser.get().getUserId());
+        questUser = questUserRepository.findById(activityUser.get().getQuestUserId());
         if (questUser.isEmpty()) {
             return Result.failure(
                     ApplicationError.notFound(

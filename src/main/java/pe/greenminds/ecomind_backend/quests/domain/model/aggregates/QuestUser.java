@@ -7,9 +7,12 @@ import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestStatu
 import pe.greenminds.ecomind_backend.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Objects;
 
 public class QuestUser extends AbstractDomainAggregateRoot {
+    private static final ZoneId DAILY_ZONE = ZoneId.of("America/Lima");
+
     @Getter
     @Setter
     private Long id;
@@ -62,9 +65,9 @@ public class QuestUser extends AbstractDomainAggregateRoot {
 
         this.progress = progress;
 
-        if (progress >= 100.0) {
+        if (progress >= 100.0 && this.status != QuestStatus.EXPIRED) {
             readyToComplete();
-        } else if (this.status != QuestStatus.COMPLETED) {
+        } else if (this.status != QuestStatus.COMPLETED && this.status != QuestStatus.EXPIRED) {
             this.status = QuestStatus.IN_PROGRESS;
             this.endDate = null;
         }
@@ -77,13 +80,24 @@ public class QuestUser extends AbstractDomainAggregateRoot {
     }
 
     public void complete() {
-        if (this.status != QuestStatus.READY_TO_COMPLETE) {
-            throw new IllegalStateException("Quest status must be READY_TO_COMPLETE");
+        if (this.status != QuestStatus.READY_TO_COMPLETE
+                && !(this.status == QuestStatus.EXPIRED && this.progress >= 100.0)) {
+            throw new IllegalStateException("Quest status must be READY_TO_COMPLETE or EXPIRED with 100 progress");
         }
 
         this.progress = 100.0;
         this.status = QuestStatus.COMPLETED;
-        this.endDate = LocalDate.now();
+        this.endDate = LocalDate.now(DAILY_ZONE);
+    }
+
+    public void expire() {
+        if (this.status != QuestStatus.COMPLETED) {
+            this.status = QuestStatus.EXPIRED;
+        }
+    }
+
+    public boolean isExpired() {
+        return this.status == QuestStatus.EXPIRED;
     }
 
     public Long getUserId() {
