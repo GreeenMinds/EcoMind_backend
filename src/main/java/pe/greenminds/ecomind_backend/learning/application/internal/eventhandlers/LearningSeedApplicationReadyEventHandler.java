@@ -33,102 +33,102 @@ public class LearningSeedApplicationReadyEventHandler {
 
     private void seed() {
         repository.save(new EducationalMaterial(
-                "♻️ Recycling Basics",
-                "Learn the fundamentals of recycling and how to properly sort your waste.",
-                "Recycling is the process of converting waste materials into new materials and objects. This reduces the consumption of fresh raw materials, energy usage, air pollution, and water pollution.\n\n## Why Recycle?\n- Conserves natural resources\n- Saves energy\n- Reduces landfill waste\n- Creates jobs\n\n## What Can Be Recycled?\n- Paper and cardboard\n- Glass bottles and jars\n- Metal cans and foil\n- Plastic bottles and containers\n\n## Tips for Better Recycling\n1. Rinse containers before recycling\n2. Keep recyclables loose (not bagged)\n3. Check local recycling guidelines",
+                "♻️ Reciclaje Básico",
+                "Aprende los fundamentos del reciclaje y cómo separar correctamente tus residuos.",
+                "El reciclaje es el proceso de convertir materiales de desecho en nuevos materiales y objetos. Esto reduce el consumo de materias primas, el uso de energía, la contaminación del aire y del agua.\n\n## ¿Por qué reciclar?\n- Conserva los recursos naturales\n- Ahorra energía\n- Reduce los residuos en vertederos\n- Crea empleos\n\n## ¿Qué se puede reciclar?\n- Papel y cartón\n- Botellas y frascos de vidrio\n- Latas y papel de aluminio\n- Botellas y envases de plástico\n\n## Consejos para reciclar mejor\n1. Enjuaga los envases antes de reciclarlos\n2. Mantén los reciclables sueltos (no en bolsas)\n3. Revisa las normas locales de reciclaje",
                 MaterialType.TEXT,
                 MaterialCategory.RECYCLE,
-                "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=400",
+                null,
                 5
         ));
 
         repository.save(new EducationalMaterial(
-                "💧 Water Conservation at Home",
-                "Simple ways to reduce water usage in your daily life.",
-                "Water is one of our most precious resources. With climate change affecting water availability, conserving water at home has never been more important.\n\n## Why Conserve Water?\n- Protect natural ecosystems\n- Reduce energy used for water treatment\n- Save money on utility bills\n- Ensure water availability for future generations\n\n## Easy Ways to Save Water\n- Fix leaky faucets promptly\n- Take shorter showers\n- Turn off tap while brushing teeth\n- Use a broom instead of a hose for cleaning driveways\n- Collect rainwater for plants\n\n## Did You Know?\nA single dripping faucet can waste over 3,000 liters of water per year!",
+                "💧 Ahorro de Agua en Casa",
+                "Formas sencillas de reducir el consumo de agua en tu vida diaria.",
+                "El agua es uno de nuestros recursos más preciados. Con el cambio climático afectando la disponibilidad de agua, conservarla en casa nunca ha sido más importante.\n\n## ¿Por qué ahorrar agua?\n- Proteger los ecosistemas naturales\n- Reducir la energía utilizada en el tratamiento del agua\n- Ahorrar dinero en las facturas\n- Asegurar agua para futuras generaciones\n\n## Formas fáciles de ahorrar agua\n- Repara las llaves que gotean\n- Toma duchas más cortas\n- Cierra la llave mientras te cepillas los dientes\n- Usa una escoba en lugar de manguera para limpiar\n- Recolecta agua de lluvia para las plantas\n\n## ¿Sabías que?\n¡Una sola llave que gotea puede desperdiciar más de 3,000 litros de agua al año!",
                 MaterialType.TEXT,
                 MaterialCategory.WATER,
-                "https://images.unsplash.com/photo-1581244277943-fe4a8c5f1c12?w=400",
+                null,
                 4
         ));
 
         repository.save(new EducationalMaterial(
-                "🔋 Understanding Renewable Energy",
-                "An overview of solar, wind, and other clean energy sources.",
-                "Renewable energy comes from natural sources that are constantly replenished. Unlike fossil fuels, renewable energy produces little to no greenhouse gas emissions.\n\n## Types of Renewable Energy\n\n### Solar Energy\nConverts sunlight into electricity using photovoltaic panels. Perfect for homes with roof space.\n\n### Wind Energy\nUses wind turbines to generate power. One of the fastest-growing energy sources.\n\n### Hydropower\nGenerates electricity from flowing water. The most established renewable source.\n\n### Geothermal\nUses heat from beneath the Earth's surface for heating and electricity.\n\n## Benefits\n- Reduces carbon emissions\n- Creates energy independence\n- Lower long-term costs\n- Sustainable and abundant",
+                "🔋 Energías Renovables",
+                "Una visión general de la energía solar, eólica y otras fuentes de energía limpia.",
+                "La energía renovable proviene de fuentes naturales que se reponen constantemente. A diferencia de los combustibles fósiles, la energía renovable produce pocas o ninguna emisión de gases de efecto invernadero.\n\n## Tipos de Energía Renovable\n\n### Energía Solar\nConvierte la luz solar en electricidad mediante paneles fotovoltaicos.\n\n### Energía Eólica\nUtiliza turbinas eólicas para generar electricidad.\n\n### Energía Hidroeléctrica\nGenera electricidad a partir del agua en movimiento.\n\n### Energía Geotérmica\nUtiliza el calor del interior de la Tierra.\n\n## Beneficios\n- Reduce las emisiones de carbono\n- Crea independencia energética\n- Menores costos a largo plazo\n- Sostenible y abundante",
                 MaterialType.TEXT,
                 MaterialCategory.ENERGY,
-                "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400",
+                null,
                 6
         ));
 
         repository.save(new EducationalMaterial(
-                "🌍 Climate Change Explained",
-                "Understanding the causes and effects of global climate change.",
-                "Climate change refers to long-term shifts in temperatures and weather patterns. While natural factors play a role, human activities have been the main driver since the 1800s.\n\n## Main Causes\n- Burning fossil fuels (coal, oil, gas)\n- Deforestation\n- Industrial agriculture\n- Waste decomposition\n\n## Effects We're Already Seeing\n- Rising global temperatures\n- More frequent extreme weather events\n- Melting ice caps and rising sea levels\n- Disruption of ecosystems\n\n## What You Can Do\n- Reduce energy consumption\n- Use public transport or bike\n- Eat less meat\n- Support renewable energy\n- Plant trees\n\nEvery action, no matter how small, contributes to the solution!",
+                "🌍 Cambio Climático",
+                "Comprende las causas y efectos del cambio climático global.",
+                "El cambio climático se refiere a cambios a largo plazo en las temperaturas y patrones climáticos. Aunque los factores naturales influyen, las actividades humanas han sido el principal impulsor desde el siglo XIX.\n\n## Principales Causas\n- Quema de combustibles fósiles\n- Deforestación\n- Agricultura industrial\n- Descomposición de residuos\n\n## Efectos que ya vemos\n- Aumento de temperaturas globales\n- Eventos climáticos extremos más frecuentes\n- Deshielo de glaciares y aumento del nivel del mar\n- Alteración de ecosistemas\n\n## Qué puedes hacer\n- Reduce el consumo de energía\n- Usa transporte público o bicicleta\n- Consume menos carne\n- Apoya las energías renovables\n- Planta árboles",
                 MaterialType.TEXT,
                 MaterialCategory.ENVIRONMENT,
-                "https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?w=400",
+                null,
                 7
         ));
 
         repository.save(new EducationalMaterial(
-                "🗑️ Composting 101",
-                "Turn your kitchen waste into nutrient-rich soil for your garden.",
-                "Composting is nature's way of recycling organic waste into valuable fertilizer. It's easy to start and makes a huge difference for the environment.\n\n## What Can You Compost?\n- Fruit and vegetable scraps\n- Coffee grounds and filters\n- Eggshells\n- Grass clippings and leaves\n- Shredded paper\n\n## What NOT to Compost\n- Meat and dairy products\n- Oily foods\n- Diseased plants\n- Pet waste\n\n## Getting Started\n1. Choose a compost bin or pile location\n2. Layer green (nitrogen-rich) and brown (carbon-rich) materials\n3. Keep it moist but not wet\n4. Turn regularly for aeration\n5. Wait 2-6 months for finished compost\n\nYour garden will thank you!",
+                "🗑️ Compostaje en Casa",
+                "Convierte tus residuos de cocina en abono rico en nutrientes para tu jardín.",
+                "El compostaje es la forma que tiene la naturaleza de reciclar residuos orgánicos y convertirlos en fertilizante valioso. Es fácil de empezar y marca una gran diferencia para el medio ambiente.\n\n## ¿Qué puedes compostar?\n- Restos de frutas y verduras\n- Posos de café y filtros\n- Cáscaras de huevo\n- Recortes de césped y hojas\n- Papel triturado\n\n## ¿Qué NO compostar?\n- Carne y productos lácteos\n- Alimentos grasosos\n- Plantas enfermas\n- Excrementos de mascotas\n\n## Cómo empezar\n1. Elige un contenedor o lugar para el compost\n2. Alterna capas de material verde y marrón\n3. Mantén la humedad adecuada\n4. Voltea regularmente para airear\n5. Espera 2 a 6 meses para tener compost listo",
                 MaterialType.TEXT,
                 MaterialCategory.RECYCLE,
-                "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400",
+                null,
                 5
         ));
 
         repository.save(new EducationalMaterial(
-                "🚰 How Water Treatment Works",
-                "Infographic showing the journey of water from source to your tap.",
-                "Water treatment is a fascinating process that ensures the water coming out of your tap is safe to drink. This infographic walks through each step of the journey.\n\nStep 1: Collection - Water is collected from rivers, lakes, or reservoirs.\nStep 2: Screening - Large debris like sticks and leaves are removed.\nStep 3: Coagulation - Chemicals are added to make small particles clump together.\nStep 4: Sedimentation - The clumps settle at the bottom.\nStep 5: Filtration - Water passes through sand and charcoal filters.\nStep 6: Disinfection - Chlorine or UV light kills remaining microorganisms.\nStep 7: Distribution - Clean water travels through pipes to your home.\n\nFun fact: A water treatment plant can process millions of liters per day!",
+                "🚰 Cómo Funciona el Tratamiento del Agua",
+                "Infografía que muestra el recorrido del agua desde su origen hasta tu grifo.",
+                "El tratamiento del agua es un proceso fascinante que garantiza que el agua que sale de tu grifo sea segura para beber.\n\nPaso 1: Captación - El agua se recolecta de ríos, lagos o embalses.\nPaso 2: Cribado - Se eliminan residuos grandes como ramas y hojas.\nPaso 3: Coagulación - Se añaden químicos para agrupar partículas pequeñas.\nPaso 4: Sedimentación - Los grupos se depositan en el fondo.\nPaso 5: Filtración - El agua pasa por filtros de arena y carbón.\nPaso 6: Desinfección - El cloro o luz UV eliminan microorganismos.\nPaso 7: Distribución - El agua limpia viaja por tuberías a tu hogar.\n\nDato curioso: ¡Una planta de tratamiento puede procesar millones de litros al día!",
                 MaterialType.INFOGRAPHIC,
                 MaterialCategory.WATER,
-                "https://images.unsplash.com/photo-1538300342682-cf57afb97285?w=400",
+                null,
                 3
         ));
 
         repository.save(new EducationalMaterial(
-                "🏠 Energy Efficiency Tips",
-                "Reduce your energy bills and carbon footprint with these practical tips.",
-                "Making your home more energy efficient is one of the best ways to save money and help the environment.\n\n## Quick Wins\n- Switch to LED light bulbs (use 75% less energy)\n- Unplug electronics when not in use\n- Use a programmable thermostat\n- Seal drafts around windows and doors\n\n## Medium Investments\n- Add insulation to attic and walls\n- Install energy-efficient windows\n- Upgrade to ENERGY STAR appliances\n\n## Long-term Solutions\n- Install solar panels\n- Switch to a heat pump\n- Consider a green roof\n\n## Savings Calculator\nA typical home can save 25-30% on energy bills by implementing these measures. That's hundreds of dollars per year!",
+                "🏠 Consejos de Eficiencia Energética",
+                "Reduce tus facturas de energía y tu huella de carbono con estos consejos prácticos.",
+                "Hacer tu hogar más eficiente energéticamente es una de las mejores formas de ahorrar dinero y ayudar al medio ambiente.\n\n## Acciones Rápidas\n- Cambia a bombillas LED (usan 75% menos energía)\n- Desconecta aparatos electrónicos cuando no los uses\n- Usa un termostato programable\n- Sella corrientes de aire en puertas y ventanas\n\n## Inversiones Medias\n- Añade aislamiento al ático y paredes\n- Instala ventanas eficientes\n- Actualiza a electrodomésticos ENERGY STAR\n\n## Soluciones a Largo Plazo\n- Instala paneles solares\n- Cambia a una bomba de calor\n- Considera un techo verde\n\nUn hogar típico puede ahorrar 25-30% en facturas de energía implementando estas medidas.",
                 MaterialType.TEXT,
                 MaterialCategory.ENERGY,
-                "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400",
+                null,
                 4
         ));
 
         repository.save(new EducationalMaterial(
-                "🌿 Biodiversity and You",
-                "Why biodiversity matters and how to protect it in your community.",
-                "Biodiversity - the variety of life on Earth - is essential for the health of our planet and our own well-being.\n\n## Why Biodiversity Matters\n- Provides food, clean water, and medicine\n- Supports pollination of crops\n- Regulates climate\n- Protects against natural disasters\n\n## Threats to Biodiversity\n- Habitat destruction\n- Pollution\n- Invasive species\n- Climate change\n- Overexploitation\n\n## How You Can Help\n- Plant native species in your garden\n- Avoid pesticides\n- Support local conservation efforts\n- Reduce your carbon footprint\n- Educate others about biodiversity\n\nRemember: When we save nature, we save ourselves.",
+                "🌿 Biodiversidad y Tú",
+                "Por qué la biodiversidad es importante y cómo protegerla en tu comunidad.",
+                "La biodiversidad - la variedad de vida en la Tierra - es esencial para la salud de nuestro planeta y nuestro bienestar.\n\n## Por qué es importante la biodiversidad\n- Proporciona alimentos, agua limpia y medicinas\n- Apoya la polinización de cultivos\n- Regula el clima\n- Protege contra desastres naturales\n\n## Amenazas a la Biodiversidad\n- Destrucción de hábitats\n- Contaminación\n- Especies invasoras\n- Cambio climático\n- Sobreexplotación\n\n## Cómo puedes ayudar\n- Planta especies nativas en tu jardín\n- Evita los pesticidas\n- Apoya los esfuerzos de conservación locales\n- Reduce tu huella de carbono\n- Educa a otros sobre la biodiversidad",
                 MaterialType.TEXT,
                 MaterialCategory.ENVIRONMENT,
-                "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400",
+                null,
                 6
         ));
 
         repository.save(new EducationalMaterial(
-                "♻️ Plastic Pollution Crisis",
-                "Video explaining the impact of plastic pollution and solutions.",
-                "Plastic pollution is one of the most pressing environmental issues of our time. Each year, 8 million tons of plastic enter our oceans.\n\n## The Problem\n- Only 9% of plastic ever produced has been recycled\n- 12 million tons of plastic enter oceans annually\n- By 2050, there could be more plastic than fish in the sea\n- Microplastics have been found in drinking water, food, and even human blood\n\n## Solutions\n1. Reduce single-use plastics\n2. Choose reusable alternatives\n3. Support legislation to ban unnecessary plastics\n4. Participate in clean-up events\n5. Advocate for extended producer responsibility\n\n## What You Can Do Today\nStart by carrying a reusable water bottle, shopping bag, and coffee cup. These small changes add up!",
+                "♻️ Crisis del Plástico",
+                "Video que explica el impacto de la contaminación por plástico y las soluciones.",
+                "La contaminación por plástico es uno de los problemas ambientales más urgentes de nuestro tiempo. Cada año, 8 millones de toneladas de plástico llegan a nuestros océanos.\n\n## El Problema\n- Solo el 9% del plástico producido ha sido reciclado\n- 12 millones de toneladas de plástico entran a los océanos anualmente\n- Para 2050, podría haber más plástico que peces en el mar\n- Se han encontrado microplásticos en agua potable, alimentos y sangre humana\n\n## Soluciones\n1. Reduce los plásticos de un solo uso\n2. Elige alternativas reutilizables\n3. Apoya leyes que prohíban plásticos innecesarios\n4. Participa en jornadas de limpieza\n5. Promueve la responsabilidad del productor\n\n## Qué puedes hacer hoy\nComienza por llevar una botella reutilizable, bolsa de compras y vaso para café.",
                 MaterialType.VIDEO,
                 MaterialCategory.RECYCLE,
-                "https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?w=400",
+                null,
                 8
         ));
 
         repository.save(new EducationalMaterial(
-                "💡 Green Energy Revolution",
-                "Video showcasing innovations in renewable energy technology.",
-                "The green energy revolution is transforming how we power our world. From floating solar farms to next-generation wind turbines, innovation is accelerating.\n\n## Breakthrough Technologies\n- Perovskite solar cells (cheaper, more efficient)\n- Floating wind turbines (access deeper waters)\n- Green hydrogen (clean fuel for industry)\n- Virtual power plants (networked home batteries)\n\n## Global Progress\n- Renewable energy now cheaper than coal in most places\n- Over 30% of global electricity comes from renewables\n- Solar energy is growing faster than any other source\n- Many countries targeting 100% renewable by 2050\n\n## The Future is Bright\nThe transition to renewable energy is not just necessary - it's already happening. And you can be part of it.",
+                "💡 Revolución de la Energía Verde",
+                "Video que muestra las innovaciones en tecnología de energía renovable.",
+                "La revolución de la energía verde está transformando la forma en que alimentamos nuestro mundo. Desde granjas solares flotantes hasta turbinas eólicas de nueva generación, la innovación se acelera.\n\n## Tecnologías Innovadoras\n- Celdas solares de perovskita (más baratas, más eficientes)\n- Turbinas eólicas flotantes (acceden a aguas más profundas)\n- Hidrógeno verde (combustible limpio para la industria)\n- Centrales eléctricas virtuales (baterías domésticas en red)\n\n## Progreso Global\n- La energía renovable ya es más barata que el carbón\n- Más del 30% de la electricidad global proviene de renovables\n- La energía solar crece más rápido que cualquier otra fuente\n- Muchos países buscan llegar al 100% renovable para 2050\n\n## El Futuro es Brillante\nLa transición a la energía renovable no solo es necesaria, ya está ocurriendo. Y tú puedes ser parte de ella.",
                 MaterialType.VIDEO,
                 MaterialCategory.ENERGY,
-                "https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=400",
+                null,
                 10
         ));
     }
