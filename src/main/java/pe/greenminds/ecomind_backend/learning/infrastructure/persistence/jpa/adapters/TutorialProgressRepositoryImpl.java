@@ -40,7 +40,6 @@ public class TutorialProgressRepositoryImpl implements TutorialProgressRepositor
         var savedEntity = tutorialProgressPersistenceRepository.save(TutorialProgressPersistenceAssembler.toPersistenceFromDomain(tutorialProgress));
         var savedProgress = TutorialProgressPersistenceAssembler.toDomainFromPersistence(savedEntity);
         if (isNew) {
-            savedProgress.onCreated();
             savedProgress.domainEvents().forEach(applicationEventPublisher::publishEvent);
             savedProgress.clearDomainEvents();
         }
