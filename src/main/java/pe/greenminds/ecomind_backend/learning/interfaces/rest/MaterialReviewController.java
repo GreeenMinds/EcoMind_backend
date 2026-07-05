@@ -12,20 +12,49 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pe.greenminds.ecomind_backend.learning.application.commandservices.MaterialReviewCommandService;
+import pe.greenminds.ecomind_backend.learning.domain.model.aggregates.MaterialReview;
+import pe.greenminds.ecomind_backend.learning.domain.repositories.MaterialReviewRepository;
 import pe.greenminds.ecomind_backend.learning.interfaces.rest.resources.MarkAsReviewedResource;
 import pe.greenminds.ecomind_backend.learning.interfaces.rest.resources.MaterialReviewResource;
 import pe.greenminds.ecomind_backend.learning.interfaces.rest.transform.MarkAsReviewedCommandFromResourceAssembler;
 import pe.greenminds.ecomind_backend.learning.interfaces.rest.transform.MaterialReviewResourceFromEntityAssembler;
 import pe.greenminds.ecomind_backend.shared.interfaces.rest.transform.ResponseEntityAssembler;
 
+import java.util.List;
+
 @RestController
 @RequestMapping(value = "/api/v1/material-reviews", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Material Reviews", description = "Material review management endpoints")
 public class MaterialReviewController {
     private final MaterialReviewCommandService materialReviewCommandService;
+    private final MaterialReviewRepository materialReviewRepository;
 
-    public MaterialReviewController(MaterialReviewCommandService materialReviewCommandService) {
+    public MaterialReviewController(
+            MaterialReviewCommandService materialReviewCommandService,
+            MaterialReviewRepository materialReviewRepository
+    ) {
         this.materialReviewCommandService = materialReviewCommandService;
+        this.materialReviewRepository = materialReviewRepository;
+    }
+
+    @GetMapping
+    @Operation(
+            summary = "Get material reviews by user",
+            description = "Retrieves all material reviews for a specific user."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Material reviews retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = MaterialReviewResource.class))
+            )
+    })
+    public ResponseEntity<List<MaterialReviewResource>> getReviewsByUser(@RequestParam Long userId) {
+        var reviews = materialReviewRepository.findByUserId(userId);
+        var resources = reviews.stream()
+                .map(MaterialReviewResourceFromEntityAssembler::toResourceFromEntity)
+                .toList();
+        return ResponseEntity.ok(resources);
     }
 
     @PostMapping
