@@ -8,9 +8,11 @@ import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Collections;
 import java.util.List;
 
 @Configuration
@@ -42,5 +44,21 @@ public class OpenApiConfiguration {
                         new Server().url("http://localhost:8092").description("Desarrollo local"),
                         new Server().url("https://ecomind-backend-t2nh.onrender.com").description("Producción")
                 ));
+    }
+
+    @Bean
+    public OpenApiCustomizer publicCommunityOperationsCustomizer() {
+        return openApi -> {
+            var communityPath = openApi.getPaths().get("/api/v1/community/communities");
+            if (communityPath == null) {
+                return;
+            }
+            if (communityPath.getGet() != null) {
+                communityPath.getGet().setSecurity(Collections.emptyList());
+            }
+            if (communityPath.getPost() != null) {
+                communityPath.getPost().setSecurity(Collections.emptyList());
+            }
+        };
     }
 }

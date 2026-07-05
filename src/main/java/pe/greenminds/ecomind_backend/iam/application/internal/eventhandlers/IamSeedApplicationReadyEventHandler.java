@@ -21,6 +21,7 @@ public class IamSeedApplicationReadyEventHandler {
     private final String email;
     private final String password;
     private final String name;
+    private final Long communityId;
 
     public IamSeedApplicationReadyEventHandler(AuthenticationCommandService authenticationCommandService,
                                               UserRepository userRepository,
@@ -29,7 +30,8 @@ public class IamSeedApplicationReadyEventHandler {
                                               @Value("${iam.seed.enabled}") boolean enabled,
                                               @Value("${iam.seed.email}") String email,
                                               @Value("${iam.seed.password}") String password,
-                                              @Value("${iam.seed.name}") String name) {
+                                              @Value("${iam.seed.name}") String name,
+                                              @Value("${iam.seed.community-id:1}") Long communityId) {
         this.authenticationCommandService = authenticationCommandService;
         this.userRepository = userRepository;
         this.credentialRepository = credentialRepository;
@@ -38,6 +40,7 @@ public class IamSeedApplicationReadyEventHandler {
         this.email = email;
         this.password = password;
         this.name = name;
+        this.communityId = communityId;
     }
 
     @EventListener
@@ -47,7 +50,7 @@ public class IamSeedApplicationReadyEventHandler {
         }
         var user = userRepository.findByEmail(email);
         if (user.isEmpty()) {
-            authenticationCommandService.signUp(new SignUpResource(name, email, password, null, null));
+            authenticationCommandService.signUp(new SignUpResource(name, email, password, communityId, null, null));
             return;
         }
         if (credentialRepository.findByUserId(user.get().getId()).isPresent()) {

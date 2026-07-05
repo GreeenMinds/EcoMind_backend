@@ -13,6 +13,7 @@ import pe.greenminds.ecomind_backend.iam.infrastructure.persistence.jpa.reposito
 import pe.greenminds.ecomind_backend.iam.infrastructure.persistence.jpa.repositories.PasswordResetTokenPersistenceRepository;
 import pe.greenminds.ecomind_backend.iam.interfaces.rest.resources.SignInResource;
 import pe.greenminds.ecomind_backend.iam.interfaces.rest.resources.SignUpResource;
+import pe.greenminds.ecomind_backend.community.domain.repositories.CommunityRepository;
 import pe.greenminds.ecomind_backend.profile.application.commandservices.UserCommandService;
 import pe.greenminds.ecomind_backend.profile.domain.model.aggregates.User;
 import pe.greenminds.ecomind_backend.profile.domain.model.commands.CreateUserCommand;
@@ -33,6 +34,7 @@ import java.util.UUID;
 public class AuthenticationCommandServiceImpl implements AuthenticationCommandService {
     private final UserRepository userRepository;
     private final UserCommandService userCommandService;
+    private final CommunityRepository communityRepository;
     private final AccountCredentialPersistenceRepository credentialRepository;
     private final PasswordResetTokenPersistenceRepository passwordResetTokenRepository;
     private final PasswordEncoder passwordEncoder;
@@ -41,6 +43,7 @@ public class AuthenticationCommandServiceImpl implements AuthenticationCommandSe
 
     public AuthenticationCommandServiceImpl(UserRepository userRepository,
                                             UserCommandService userCommandService,
+                                            CommunityRepository communityRepository,
                                             AccountCredentialPersistenceRepository credentialRepository,
                                             PasswordResetTokenPersistenceRepository passwordResetTokenRepository,
                                             PasswordEncoder passwordEncoder,
@@ -48,6 +51,7 @@ public class AuthenticationCommandServiceImpl implements AuthenticationCommandSe
                                             @Value("${authorization.password-reset.expiration.minutes}") long passwordResetExpirationMinutes) {
         this.userRepository = userRepository;
         this.userCommandService = userCommandService;
+        this.communityRepository = communityRepository;
         this.credentialRepository = credentialRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.passwordEncoder = passwordEncoder;
@@ -63,9 +67,13 @@ public class AuthenticationCommandServiceImpl implements AuthenticationCommandSe
             return Result.failure(ApplicationError.conflict("User", "Email already exists"));
         }
 
+        if (communityRepository.findById(resource.communityId()).isEmpty()) {
+            return Result.failure(ApplicationError.notFound("Community", resource.communityId().toString()));
+        }
+
         var birthDate = parseBirthDate(resource.birthDate());
         var createdUser = userCommandService.handle(new CreateUserCommand(
-                null,
+                resource.communityId(),
                 email,
                 birthDate,
                 resource.name().trim(),

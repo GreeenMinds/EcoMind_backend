@@ -60,15 +60,6 @@ public class UserController {
         return ResponseEntity.ok(UserResourceFromEntityAssembler.toResourceFromEntity(user.get()));
     }
 
-    @PostMapping
-    @Operation(summary = "Create user", description = "Create a new user profile with personal information and initial stats.")
-    public ResponseEntity<?> createUser(@Valid @RequestBody CreateUserResource resource) {
-        return ResponseEntityAssembler.toResponseEntityFromResult(
-                commandService.handle(CreateUserCommandFromResourceAssembler.toCommandFromResource(resource)),
-                UserResourceFromEntityAssembler::toResourceFromEntity,
-                HttpStatus.CREATED);
-    }
-
     @PutMapping("/{userId}")
     @Operation(summary = "Update user", description = "Update all editable information for a user profile.")
     public ResponseEntity<?> updateUser(@PathVariable Long userId, @Valid @RequestBody UpdateUserResource resource) {
@@ -88,7 +79,7 @@ public class UserController {
         };
     }
 
-    @PatchMapping({"/{userId}/commitment", "/{userId}/profile/commitment"})
+    @PatchMapping("/{userId}/commitment")
     @Operation(summary = "Update user commitment", description = "Update only the environmental commitment shown in the user's profile.")
     public ResponseEntity<?> updateCommitment(@PathVariable Long userId, @RequestBody CommitmentResource resource) {
         return ResponseEntityAssembler.toResponseEntityFromResult(

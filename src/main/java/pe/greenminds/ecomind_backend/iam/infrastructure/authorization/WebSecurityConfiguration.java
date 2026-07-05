@@ -63,6 +63,8 @@ public class WebSecurityConfiguration {
                                 "/swagger-resources/**",
                                 "/webjars/**"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/community/communities").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/community/communities").permitAll()
                         .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().permitAll()
                 )
