@@ -21,6 +21,8 @@ import pe.greenminds.ecomind_backend.monetization.domain.model.valueobjects.Paym
 import pe.greenminds.ecomind_backend.monetization.domain.repositories.GemMovementRepository;
 import pe.greenminds.ecomind_backend.monetization.domain.repositories.GemPackageRepository;
 import pe.greenminds.ecomind_backend.monetization.domain.repositories.GemPurchaseRepository;
+import pe.greenminds.ecomind_backend.profile.domain.model.aggregates.Notification;
+import pe.greenminds.ecomind_backend.profile.domain.repositories.NotificationRepository;
 import pe.greenminds.ecomind_backend.shared.application.result.ApplicationError;
 import pe.greenminds.ecomind_backend.shared.application.result.Result;
 
@@ -36,19 +38,22 @@ public class GemPurchaseCommandServiceImpl implements GemPurchaseCommandService 
     private final GemMovementRepository gemMovementRepository;
     private final ProfileMonetizationExternalService profileMonetizationExternalService;
     private final PaymentGatewayResolver paymentGatewayResolver;
+    private final NotificationRepository notificationRepository;
 
     public GemPurchaseCommandServiceImpl(
             GemPurchaseRepository gemPurchaseRepository,
             GemPackageRepository gemPackageRepository,
             GemMovementRepository gemMovementRepository,
             ProfileMonetizationExternalService profileMonetizationExternalService,
-            PaymentGatewayResolver paymentGatewayResolver
+            PaymentGatewayResolver paymentGatewayResolver,
+            NotificationRepository notificationRepository
     ) {
         this.gemPurchaseRepository = gemPurchaseRepository;
         this.gemPackageRepository = gemPackageRepository;
         this.gemMovementRepository = gemMovementRepository;
         this.profileMonetizationExternalService = profileMonetizationExternalService;
         this.paymentGatewayResolver = paymentGatewayResolver;
+        this.notificationRepository = notificationRepository;
     }
 
     @Transactional
@@ -214,8 +219,24 @@ public class GemPurchaseCommandServiceImpl implements GemPurchaseCommandService 
                 MovementOrigin.GEM_PACKAGE,
                 savedGemPurchase.getPackageId()
         ));
+        createPurchaseNotification(savedGemPurchase, gemPackage);
 
         return Result.success(savedGemPurchase);
+    }
+
+    private void createPurchaseNotification(GemPurchase gemPurchase, GemPackage gemPackage) {
+        notificationRepository.save(new Notification(
+                null,
+                gemPurchase.getUserId(),
+                "general",
+                "Purchase completed",
+                "Your purchase of " + gemPackage.getGemAmount() + " gems was completed.",
+                false,
+                "gem_purchase",
+                gemPurchase.getId(),
+                null,
+                null
+        ));
     }
 
     @Transactional

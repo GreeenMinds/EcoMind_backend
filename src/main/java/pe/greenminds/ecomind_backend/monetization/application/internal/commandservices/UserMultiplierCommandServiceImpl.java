@@ -13,6 +13,8 @@ import pe.greenminds.ecomind_backend.monetization.domain.model.valueobjects.Move
 import pe.greenminds.ecomind_backend.monetization.domain.repositories.GemMovementRepository;
 import pe.greenminds.ecomind_backend.monetization.domain.repositories.MultiplierRepository;
 import pe.greenminds.ecomind_backend.monetization.domain.repositories.UserMultiplierRepository;
+import pe.greenminds.ecomind_backend.profile.domain.model.aggregates.Notification;
+import pe.greenminds.ecomind_backend.profile.domain.repositories.NotificationRepository;
 import pe.greenminds.ecomind_backend.shared.application.result.ApplicationError;
 import pe.greenminds.ecomind_backend.shared.application.result.Result;
 
@@ -25,17 +27,20 @@ public class UserMultiplierCommandServiceImpl implements UserMultiplierCommandSe
     private final MultiplierRepository multiplierRepository;
     private final GemMovementRepository gemMovementRepository;
     private final ProfileMonetizationExternalService profileMonetizationExternalService;
+    private final NotificationRepository notificationRepository;
 
     public UserMultiplierCommandServiceImpl(
             UserMultiplierRepository userMultiplierRepository,
             MultiplierRepository multiplierRepository,
             GemMovementRepository gemMovementRepository,
-            ProfileMonetizationExternalService profileMonetizationExternalService
+            ProfileMonetizationExternalService profileMonetizationExternalService,
+            NotificationRepository notificationRepository
     ) {
         this.userMultiplierRepository = userMultiplierRepository;
         this.multiplierRepository = multiplierRepository;
         this.gemMovementRepository = gemMovementRepository;
         this.profileMonetizationExternalService = profileMonetizationExternalService;
+        this.notificationRepository = notificationRepository;
     }
 
     @Transactional
@@ -101,6 +106,18 @@ public class UserMultiplierCommandServiceImpl implements UserMultiplierCommandSe
                 -multiplier.get().getGemCost(),
                 MovementOrigin.MULTIPLIER,
                 command.multiplierId()
+        ));
+        notificationRepository.save(new Notification(
+                null,
+                command.userId(),
+                "general",
+                "Purchase completed",
+                "You bought a x" + multiplier.get().getMultiplierFactor() + " multiplier.",
+                false,
+                "multiplier",
+                command.multiplierId(),
+                null,
+                null
         ));
 
         return Result.success(savedUserMultiplier);
