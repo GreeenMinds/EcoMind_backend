@@ -8,7 +8,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pe.greenminds.ecomind_backend.community.application.commandservices.PostCommandService;
 import pe.greenminds.ecomind_backend.community.application.queryservices.PostQueryService;
+import pe.greenminds.ecomind_backend.community.application.queryservices.PostReactionQueryService;
 import pe.greenminds.ecomind_backend.community.domain.model.commands.DeletePostCommand;
+import pe.greenminds.ecomind_backend.community.domain.model.queries.CountPostReactionsByPostIdQuery;
 import pe.greenminds.ecomind_backend.community.domain.model.queries.SearchPostsQuery;
 import pe.greenminds.ecomind_backend.community.interfaces.rest.resources.CreatePostResource;
 import pe.greenminds.ecomind_backend.community.interfaces.rest.resources.PostResource;
@@ -28,10 +30,16 @@ public class PostController {
 
     private final PostCommandService postCommandService;
     private final PostQueryService postQueryService;
+    private final PostReactionQueryService postReactionQueryService;
 
-    public PostController(PostCommandService postCommandService, PostQueryService postQueryService) {
+    public PostController(
+            PostCommandService postCommandService,
+            PostQueryService postQueryService,
+            PostReactionQueryService postReactionQueryService
+    ) {
         this.postCommandService = postCommandService;
         this.postQueryService = postQueryService;
+        this.postReactionQueryService = postReactionQueryService;
     }
 
     @GetMapping
@@ -43,7 +51,12 @@ public class PostController {
 
         var resources = postQueryService.handle(query)
                 .stream()
-                .map(PostResourceFromEntityAssembler::toResourceFromEntity)
+                .map(post -> {
+                    var likes = Math.toIntExact(
+                            postReactionQueryService.handle(new CountPostReactionsByPostIdQuery(post.getId()))
+                    );
+                    return PostResourceFromEntityAssembler.toResourceFromEntity(post, likes);
+                })
                 .toList();
 
         return ResponseEntity.ok(resources);

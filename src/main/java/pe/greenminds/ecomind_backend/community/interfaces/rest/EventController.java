@@ -69,8 +69,11 @@ public class EventController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteEvent(@PathVariable Long id) {
-        var result = eventCommandService.handle(new DeleteEventCommand(id));
+    public ResponseEntity<?> deleteEvent(
+            @PathVariable Long id,
+            @RequestParam(name = "author_id") Long authorId
+    ) {
+        var result = eventCommandService.handle(new DeleteEventCommand(id, authorId));
 
         return switch (result) {
             case Result.Success<Void, ApplicationError> ignored ->

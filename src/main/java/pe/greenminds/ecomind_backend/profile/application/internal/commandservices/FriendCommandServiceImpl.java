@@ -3,8 +3,11 @@ package pe.greenminds.ecomind_backend.profile.application.internal.commandservic
 import org.springframework.stereotype.Service;
 import pe.greenminds.ecomind_backend.profile.application.commandservices.FriendCommandService;
 import pe.greenminds.ecomind_backend.profile.domain.model.aggregates.Friend;
+import pe.greenminds.ecomind_backend.profile.domain.model.aggregates.Notification;
 import pe.greenminds.ecomind_backend.profile.domain.model.commands.*;
+import pe.greenminds.ecomind_backend.profile.domain.model.valueobjects.FriendStatus;
 import pe.greenminds.ecomind_backend.profile.domain.repositories.FriendRepository;
+import pe.greenminds.ecomind_backend.profile.domain.repositories.NotificationRepository;
 import pe.greenminds.ecomind_backend.profile.domain.repositories.UserRepository;
 import pe.greenminds.ecomind_backend.shared.application.result.ApplicationError;
 import pe.greenminds.ecomind_backend.shared.application.result.Result;
@@ -13,10 +16,13 @@ import pe.greenminds.ecomind_backend.shared.application.result.Result;
 public class FriendCommandServiceImpl implements FriendCommandService {
     private final FriendRepository friendRepository;
     private final UserRepository userRepository;
+    private final NotificationRepository notificationRepository;
 
-    public FriendCommandServiceImpl(FriendRepository friendRepository, UserRepository userRepository) {
+    public FriendCommandServiceImpl(FriendRepository friendRepository, UserRepository userRepository,
+                                    NotificationRepository notificationRepository) {
         this.friendRepository = friendRepository;
         this.userRepository = userRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     public Result<Friend, ApplicationError> handle(CreateFriendCommand command) {
@@ -25,10 +31,22 @@ public class FriendCommandServiceImpl implements FriendCommandService {
         }
         if (!userRepository.existsById(command.userId())) return Result.failure(ApplicationError.notFound("User", command.userId().toString()));
         if (!userRepository.existsById(command.friendId())) return Result.failure(ApplicationError.notFound("User", command.friendId().toString()));
-        if (friendRepository.existsRelationship(command.userId(), command.friendId())) {
-            return Result.failure(ApplicationError.conflict("Friend", "Friend relationship already exists"));
+        var existingRelationship = friendRepository.findRelationship(command.userId(), command.friendId());
+        if (existingRelationship.isPresent()) {
+            var existing = existingRelationship.get();
+            if (existing.getStatus() != FriendStatus.REJECTED) {
+                return Result.failure(ApplicationError.conflict("Friend", "Friend relationship already exists"));
+            }
+            existing.update(command.userId(), command.friendId(), FriendStatus.PENDING);
+            var saved = friendRepository.save(existing);
+            createFriendNotification(command.friendId(), "Friend request",
+                    userName(command.userId()) + " wants to add you as a friend.", saved.getId());
+            return Result.success(saved);
         }
-        return Result.success(friendRepository.save(new Friend(null, command.userId(), command.friendId(), command.status())));
+        var saved = friendRepository.save(new Friend(null, command.userId(), command.friendId(), command.status()));
+        createFriendNotification(command.friendId(), "Friend request",
+                userName(command.userId()) + " wants to add you as a friend.", saved.getId());
+        return Result.success(saved);
     }
 
     public Result<Friend, ApplicationError> handle(UpdateFriendCommand command) {
@@ -44,15 +62,27 @@ public class FriendCommandServiceImpl implements FriendCommandService {
     public Result<Friend, ApplicationError> handle(AcceptFriendCommand command) {
         var friend = friendRepository.findById(command.friendRelationId());
         if (friend.isEmpty()) return Result.failure(ApplicationError.notFound("Friend", command.friendRelationId().toString()));
+        if (friend.get().getStatus() != FriendStatus.PENDING) {
+            return Result.failure(ApplicationError.businessRuleViolation("pending-friend-request", "Only pending friend requests can be accepted"));
+        }
         friend.get().accept();
-        return Result.success(friendRepository.save(friend.get()));
+        var saved = friendRepository.save(friend.get());
+        createFriendNotification(saved.getUserId(), "Friend request accepted",
+                userName(saved.getFriendId()) + " accepted your friend request.", saved.getId());
+        return Result.success(saved);
     }
 
     public Result<Friend, ApplicationError> handle(RejectFriendCommand command) {
         var friend = friendRepository.findById(command.friendRelationId());
         if (friend.isEmpty()) return Result.failure(ApplicationError.notFound("Friend", command.friendRelationId().toString()));
+        if (friend.get().getStatus() != FriendStatus.PENDING) {
+            return Result.failure(ApplicationError.businessRuleViolation("pending-friend-request", "Only pending friend requests can be rejected"));
+        }
         friend.get().reject();
-        return Result.success(friendRepository.save(friend.get()));
+        var saved = friendRepository.save(friend.get());
+        createFriendNotification(saved.getUserId(), "Friend request rejected",
+                userName(saved.getFriendId()) + " rejected your friend request.", saved.getId());
+        return Result.success(saved);
     }
 
     public Result<Friend, ApplicationError> handle(DeleteFriendCommand command) {
@@ -60,5 +90,14 @@ public class FriendCommandServiceImpl implements FriendCommandService {
         if (friend.isEmpty()) return Result.failure(ApplicationError.notFound("Friend", command.friendRelationId().toString()));
         friendRepository.deleteById(command.friendRelationId());
         return Result.success(friend.get());
+    }
+
+    private void createFriendNotification(Long userId, String title, String message, Long friendRelationId) {
+        notificationRepository.save(new Notification(null, userId, "friendship", title, message, false,
+                "friend", friendRelationId, null, null));
+    }
+
+    private String userName(Long userId) {
+        return userRepository.findById(userId).map(user -> user.getName()).orElse("A user");
     }
 }
