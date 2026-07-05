@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pe.greenminds.ecomind_backend.iam.application.CurrentAuthenticatedUserService;
 import pe.greenminds.ecomind_backend.monetization.application.commandservices.UserCosmeticCommandService;
 import pe.greenminds.ecomind_backend.monetization.application.queryservices.UserCosmeticQueryService;
 import pe.greenminds.ecomind_backend.monetization.domain.model.queries.GetAllUserCosmeticsQuery;
@@ -25,6 +26,7 @@ import pe.greenminds.ecomind_backend.monetization.interfaces.rest.transform.Purc
 import pe.greenminds.ecomind_backend.monetization.interfaces.rest.transform.UpdateUserCosmeticCommandFromResourceAssembler;
 import pe.greenminds.ecomind_backend.monetization.interfaces.rest.transform.UserCosmeticResourceFromEntityAssembler;
 import pe.greenminds.ecomind_backend.shared.application.result.ApplicationError;
+import pe.greenminds.ecomind_backend.shared.interfaces.rest.resources.ErrorResource;
 import pe.greenminds.ecomind_backend.shared.interfaces.rest.transform.ErrorResponseAssembler;
 import pe.greenminds.ecomind_backend.shared.interfaces.rest.transform.ResponseEntityAssembler;
 
@@ -37,10 +39,12 @@ public class UserCosmeticController {
 
     private final UserCosmeticCommandService userCosmeticCommandService;
     private final UserCosmeticQueryService userCosmeticQueryService;
+    private final CurrentAuthenticatedUserService currentAuthenticatedUserService;
 
-    public UserCosmeticController(UserCosmeticCommandService userCosmeticCommandService, UserCosmeticQueryService userCosmeticQueryService) {
+    public UserCosmeticController(UserCosmeticCommandService userCosmeticCommandService, UserCosmeticQueryService userCosmeticQueryService, CurrentAuthenticatedUserService currentAuthenticatedUserService) {
         this.userCosmeticCommandService = userCosmeticCommandService;
         this.userCosmeticQueryService = userCosmeticQueryService;
+        this.currentAuthenticatedUserService = currentAuthenticatedUserService;
     }
 
     @PostMapping
@@ -58,6 +62,9 @@ public class UserCosmeticController {
             @ApiResponse(responseCode = "409", description = "Conflict: user cosmetic already exists")
     })
     public ResponseEntity<?> createUserCosmetic(@Valid @RequestBody CreateUserCosmeticResource resource) {
+        var forbidden = forbiddenIfNotCurrentUser(resource.userId());
+        if (forbidden != null) return forbidden;
+
         var command = CreateUserCosmeticCommandFromResourceAssembler.toCommandFromResource(resource);
         var result = userCosmeticCommandService.handle(command);
 
@@ -84,6 +91,9 @@ public class UserCosmeticController {
             @ApiResponse(responseCode = "422", description = "Insufficient gem balance")
     })
     public ResponseEntity<?> purchaseUserCosmetic(@Valid @RequestBody PurchaseUserCosmeticResource resource) {
+        var forbidden = forbiddenIfNotCurrentUser(resource.userId());
+        if (forbidden != null) return forbidden;
+
         var command = PurchaseUserCosmeticCommandFromResourceAssembler.toCommandFromResource(resource);
         var result = userCosmeticCommandService.handle(command);
 
@@ -171,6 +181,15 @@ public class UserCosmeticController {
             @ApiResponse(responseCode = "404", description = "User cosmetic not found")
     })
     public ResponseEntity<?> updateUserCosmetic(@PathVariable Long userCosmeticId, @Valid @RequestBody UpdateUserCosmeticResource resource) {
+        var forbidden = forbiddenIfNotCurrentUser(resource.userId());
+        if (forbidden != null) return forbidden;
+
+        var existing = userCosmeticQueryService.handle(new GetUserCosmeticByIdQuery(userCosmeticId));
+        if (existing.isPresent()) {
+            forbidden = forbiddenIfNotCurrentUser(existing.get().getUserId());
+            if (forbidden != null) return forbidden;
+        }
+
         var command = UpdateUserCosmeticCommandFromResourceAssembler.toCommandFromResource(userCosmeticId, resource);
         var result = userCosmeticCommandService.handle(command);
 
@@ -179,5 +198,15 @@ public class UserCosmeticController {
                 UserCosmeticResourceFromEntityAssembler::toResourceFromEntity,
                 HttpStatus.OK
         );
+    }
+
+    private ResponseEntity<ErrorResource> forbiddenIfNotCurrentUser(Long userId) {
+        var currentUserId = currentAuthenticatedUserService.currentUserId();
+        if (currentUserId.isEmpty() || !currentUserId.get().equals(userId)) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new ErrorResource("FORBIDDEN", "You cannot manage another user's cosmetics.", null));
+        }
+        return null;
     }
 }
