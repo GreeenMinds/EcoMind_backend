@@ -9,6 +9,9 @@ import pe.greenminds.ecomind_backend.community.domain.model.commands.DeletePostR
 import pe.greenminds.ecomind_backend.community.domain.model.commands.UpdatePostReactionTypeCommand;
 import pe.greenminds.ecomind_backend.community.domain.repositories.PostReactionRepository;
 import pe.greenminds.ecomind_backend.community.domain.repositories.PostRepository;
+import pe.greenminds.ecomind_backend.profile.domain.model.aggregates.Notification;
+import pe.greenminds.ecomind_backend.profile.domain.repositories.NotificationRepository;
+import pe.greenminds.ecomind_backend.profile.domain.repositories.UserRepository;
 import pe.greenminds.ecomind_backend.shared.application.result.ApplicationError;
 import pe.greenminds.ecomind_backend.shared.application.result.Result;
 
@@ -17,13 +20,19 @@ public class PostReactionCommandServiceImpl implements PostReactionCommandServic
 
     private final PostReactionRepository postReactionRepository;
     private final PostRepository postRepository;
+    private final NotificationRepository notificationRepository;
+    private final UserRepository userRepository;
 
     public PostReactionCommandServiceImpl(
             PostReactionRepository postReactionRepository,
-            PostRepository postRepository
+            PostRepository postRepository,
+            NotificationRepository notificationRepository,
+            UserRepository userRepository
     ) {
         this.postReactionRepository = postReactionRepository;
         this.postRepository = postRepository;
+        this.notificationRepository = notificationRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -46,8 +55,17 @@ public class PostReactionCommandServiceImpl implements PostReactionCommandServic
                     command.userId(),
                     command.reactionType()
             );
+            var savedReaction = postReactionRepository.save(postReaction);
+            postRepository.findById(command.postId())
+                    .filter(post -> !post.getUserId().equals(command.userId()))
+                    .ifPresent(post -> createReactionNotification(
+                            post.getUserId(),
+                            command.userId(),
+                            command.postId(),
+                            command.reactionType().getValue()
+                    ));
 
-            return Result.success(postReactionRepository.save(postReaction));
+            return Result.success(savedReaction);
         } catch (IllegalArgumentException | NullPointerException exception) {
             return Result.failure(
                     ApplicationError.validationError("PostReaction", exception.getMessage())
@@ -100,5 +118,23 @@ public class PostReactionCommandServiceImpl implements PostReactionCommandServic
                     ApplicationError.unexpected("PostReaction deletion", exception.getMessage())
             );
         }
+    }
+
+    private void createReactionNotification(Long postOwnerId, Long reactorId, Long postId, String reactionType) {
+        var reactorName = userRepository.findById(reactorId)
+                .map(user -> user.getName())
+                .orElse("Someone");
+        notificationRepository.save(new Notification(
+                null,
+                postOwnerId,
+                "community",
+                "New reaction on your post",
+                reactorName + " reacted to your post with " + reactionType + ".",
+                false,
+                "post",
+                postId,
+                null,
+                null
+        ));
     }
 }

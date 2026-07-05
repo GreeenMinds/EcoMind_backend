@@ -14,6 +14,8 @@ import pe.greenminds.ecomind_backend.monetization.domain.model.valueobjects.Move
 import pe.greenminds.ecomind_backend.monetization.domain.repositories.CosmeticRepository;
 import pe.greenminds.ecomind_backend.monetization.domain.repositories.GemMovementRepository;
 import pe.greenminds.ecomind_backend.monetization.domain.repositories.UserCosmeticRepository;
+import pe.greenminds.ecomind_backend.profile.domain.model.aggregates.Notification;
+import pe.greenminds.ecomind_backend.profile.domain.repositories.NotificationRepository;
 import pe.greenminds.ecomind_backend.shared.application.result.ApplicationError;
 import pe.greenminds.ecomind_backend.shared.application.result.Result;
 
@@ -26,17 +28,20 @@ public class UserCosmeticCommandServiceImpl implements UserCosmeticCommandServic
     private final CosmeticRepository cosmeticRepository;
     private final GemMovementRepository gemMovementRepository;
     private final ProfileMonetizationExternalService profileMonetizationExternalService;
+    private final NotificationRepository notificationRepository;
 
     public UserCosmeticCommandServiceImpl(
             UserCosmeticRepository userCosmeticRepository,
             CosmeticRepository cosmeticRepository,
             GemMovementRepository gemMovementRepository,
-            ProfileMonetizationExternalService profileMonetizationExternalService
+            ProfileMonetizationExternalService profileMonetizationExternalService,
+            NotificationRepository notificationRepository
     ) {
         this.userCosmeticRepository = userCosmeticRepository;
         this.cosmeticRepository = cosmeticRepository;
         this.gemMovementRepository = gemMovementRepository;
         this.profileMonetizationExternalService = profileMonetizationExternalService;
+        this.notificationRepository = notificationRepository;
     }
 
     @Transactional
@@ -117,6 +122,18 @@ public class UserCosmeticCommandServiceImpl implements UserCosmeticCommandServic
                 -cosmetic.get().getPrice(),
                 MovementOrigin.COSMETIC,
                 command.cosmeticId()
+        ));
+        notificationRepository.save(new Notification(
+                null,
+                command.userId(),
+                "general",
+                "Purchase completed",
+                "You bought " + cosmetic.get().getName() + ".",
+                false,
+                "cosmetic",
+                command.cosmeticId(),
+                null,
+                null
         ));
 
         return Result.success(savedUserCosmetic);
