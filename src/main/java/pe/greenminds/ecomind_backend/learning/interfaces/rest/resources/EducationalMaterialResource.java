@@ -41,6 +41,9 @@ public record EducationalMaterialResource(
         @Schema(description = "Image URL for the educational material", example = "https://example.com/recycling.png")
         String imageUrl,
 
+        @Schema(description = "Video URL for video-type materials (YouTube embed)", example = "https://www.youtube.com/embed/xxxx")
+        String videoUrl,
+
         @Schema(description = "Duration in minutes to complete the material", example = "15")
         Integer durationMinutes,
 

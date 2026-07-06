@@ -42,6 +42,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.TEXT,
                 MaterialCategory.RECYCLE,
                 "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=600",
+                null,
                 5,
                 "es"
         ));
@@ -53,6 +54,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.TEXT,
                 MaterialCategory.WATER,
                 "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=600",
+                null,
                 4,
                 "es"
         ));
@@ -64,6 +66,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.TEXT,
                 MaterialCategory.ENERGY,
                 "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=600",
+                null,
                 6,
                 "es"
         ));
@@ -75,6 +78,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.TEXT,
                 MaterialCategory.ENVIRONMENT,
                 "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600",
+                null,
                 7,
                 "es"
         ));
@@ -86,6 +90,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.TEXT,
                 MaterialCategory.RECYCLE,
                 "https://images.unsplash.com/photo-1585336261022-680e295ce3fe?w=600",
+                null,
                 5,
                 "es"
         ));
@@ -97,6 +102,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.INFOGRAPHIC,
                 MaterialCategory.WATER,
                 "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600",
+                null,
                 3,
                 "es"
         ));
@@ -108,6 +114,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.TEXT,
                 MaterialCategory.ENERGY,
                 "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=600",
+                null,
                 4,
                 "es"
         ));
@@ -119,6 +126,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.TEXT,
                 MaterialCategory.ENVIRONMENT,
                 "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600",
+                null,
                 6,
                 "es"
         ));
@@ -130,6 +138,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.VIDEO,
                 MaterialCategory.RECYCLE,
                 "https://images.unsplash.com/photo-1611284446318-60a73ac1dbe2?w=600",
+                "https://www.youtube.com/embed/9GorqroigqM",
                 8,
                 "es"
         ));
@@ -141,6 +150,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.VIDEO,
                 MaterialCategory.ENERGY,
                 "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600",
+                "https://www.youtube.com/embed/8yVLGMR-R3I",
                 10,
                 "es"
         ));
@@ -153,6 +163,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.TEXT,
                 MaterialCategory.RECYCLE,
                 "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=600",
+                null,
                 5,
                 "en"
         ));
@@ -164,6 +175,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.TEXT,
                 MaterialCategory.WATER,
                 "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=600",
+                null,
                 4,
                 "en"
         ));
@@ -175,6 +187,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.TEXT,
                 MaterialCategory.ENERGY,
                 "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=600",
+                null,
                 6,
                 "en"
         ));
@@ -186,6 +199,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.TEXT,
                 MaterialCategory.ENVIRONMENT,
                 "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600",
+                null,
                 7,
                 "en"
         ));
@@ -197,6 +211,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.TEXT,
                 MaterialCategory.RECYCLE,
                 "https://images.unsplash.com/photo-1585336261022-680e295ce3fe?w=600",
+                null,
                 5,
                 "en"
         ));
@@ -208,6 +223,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.INFOGRAPHIC,
                 MaterialCategory.WATER,
                 "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600",
+                null,
                 3,
                 "en"
         ));
@@ -219,6 +235,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.TEXT,
                 MaterialCategory.ENERGY,
                 "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=600",
+                null,
                 4,
                 "en"
         ));
@@ -230,6 +247,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.TEXT,
                 MaterialCategory.ENVIRONMENT,
                 "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600",
+                null,
                 6,
                 "en"
         ));
@@ -241,6 +259,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.VIDEO,
                 MaterialCategory.RECYCLE,
                 "https://images.unsplash.com/photo-1611284446318-60a73ac1dbe2?w=600",
+                "https://www.youtube.com/embed/F4aCvGkMfvQ",
                 8,
                 "en"
         ));
@@ -252,6 +271,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.VIDEO,
                 MaterialCategory.ENERGY,
                 "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600",
+                "https://www.youtube.com/embed/1kUE0BZtTRc",
                 10,
                 "en"
         ));
