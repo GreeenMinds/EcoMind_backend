@@ -2,6 +2,7 @@ package pe.greenminds.ecomind_backend.ranking.application.outboundservices.exter
 
 import org.springframework.stereotype.Service;
 import pe.greenminds.ecomind_backend.profile.domain.model.aggregates.Family;
+import pe.greenminds.ecomind_backend.profile.domain.model.aggregates.User;
 import pe.greenminds.ecomind_backend.profile.domain.repositories.FamilyRepository;
 import pe.greenminds.ecomind_backend.profile.domain.repositories.FamilyUserRepository;
 import pe.greenminds.ecomind_backend.profile.domain.repositories.UserRepository;
@@ -23,6 +24,10 @@ public class ProfileRankingExternalService {
         this.familyRepository = familyRepository;
         this.familyUserRepository = familyUserRepository;
         this.userRepository = userRepository;
+    }
+
+    public List<User> fetchAllUsers() {
+        return userRepository.findAll();
     }
 
     public Long fetchProfileIdByUserId(Long userId) {
