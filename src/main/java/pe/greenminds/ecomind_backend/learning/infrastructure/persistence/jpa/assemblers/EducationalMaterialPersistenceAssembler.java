@@ -14,7 +14,8 @@ public class EducationalMaterialPersistenceAssembler {
                 entity.getMaterialType(),
                 entity.getCategory(),
                 entity.getImageUrl(),
-                entity.getDurationMinutes()
+                entity.getDurationMinutes(),
+                entity.getLanguage()
         );
         material.setId(entity.getId());
         return material;
@@ -30,6 +31,7 @@ public class EducationalMaterialPersistenceAssembler {
         entity.setCategory(material.getCategory());
         entity.setImageUrl(material.getImageUrl());
         entity.setDurationMinutes(material.getDurationMinutes());
+        entity.setLanguage(material.getLanguage());
         return entity;
     }
 }

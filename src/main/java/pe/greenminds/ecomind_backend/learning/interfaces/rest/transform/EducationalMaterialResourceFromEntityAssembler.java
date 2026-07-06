@@ -18,7 +18,8 @@ public class EducationalMaterialResourceFromEntityAssembler {
                 entity.getMaterialType().name(),
                 entity.getCategory().name(),
                 entity.getImageUrl(),
-                entity.getDurationMinutes()
+                entity.getDurationMinutes(),
+                entity.getLanguage()
         );
     }
 

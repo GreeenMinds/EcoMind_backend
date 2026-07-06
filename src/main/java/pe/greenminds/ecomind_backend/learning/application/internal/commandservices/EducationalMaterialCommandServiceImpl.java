@@ -29,7 +29,8 @@ public class EducationalMaterialCommandServiceImpl implements EducationalMateria
                     command.materialType(),
                     command.category(),
                     command.imageUrl(),
-                    command.durationMinutes()
+                    command.durationMinutes(),
+                    null
             );
             return Result.success(educationalMaterialRepository.save(educationalMaterial));
         } catch (IllegalArgumentException e) {
@@ -60,7 +61,8 @@ public class EducationalMaterialCommandServiceImpl implements EducationalMateria
                     command.materialType(),
                     command.category(),
                     command.imageUrl(),
-                    command.durationMinutes()
+                    command.durationMinutes(),
+                    existing.get().getLanguage()
             );
             return Result.success(educationalMaterialRepository.save(updated));
         } catch (IllegalArgumentException e) {

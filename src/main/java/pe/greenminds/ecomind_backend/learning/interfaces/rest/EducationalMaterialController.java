@@ -81,15 +81,21 @@ public class EducationalMaterialController {
     @GetMapping
     @Operation(
             summary = "Get all educational materials",
-            description = "Retrieves all available educational materials."
+            description = "Retrieves all available educational materials, optionally filtered by language."
     )
     @ApiResponse(
             responseCode = "200",
             description = "Educational materials retrieved successfully."
     )
-    public ResponseEntity<List<EducationalMaterialResource>> getAllEducationalMaterials() {
+    public ResponseEntity<List<EducationalMaterialResource>> getAllEducationalMaterials(
+            @RequestParam(required = false) String lang
+    ) {
         var materials = educationalMaterialQueryService.handle(new GetAllEducationalMaterialsQuery());
-
+        if (lang != null && !lang.isBlank()) {
+            materials = materials.stream()
+                    .filter(m -> m.getLanguage() != null && lang.equals(m.getLanguage()))
+                    .toList();
+        }
         var resources = materials.stream()
                 .map(EducationalMaterialResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();

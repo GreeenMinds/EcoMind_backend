@@ -32,6 +32,9 @@ public class EducationalMaterialEntity extends AuditableAbstractPersistenceEntit
     @Column(name = "duration_minutes")
     private Integer durationMinutes;
 
+    @Column(name = "language")
+    private String language;
+
     public String getTitle() {
         return title;
     }
@@ -86,5 +89,13 @@ public class EducationalMaterialEntity extends AuditableAbstractPersistenceEntit
 
     public void setDurationMinutes(Integer durationMinutes) {
         this.durationMinutes = durationMinutes;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
     }
 }

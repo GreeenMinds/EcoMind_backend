@@ -14,7 +14,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
                   "materialType": "TEXT",
                   "category": "RECYCLE",
                   "imageUrl": "https://example.com/recycling.png",
-                  "durationMinutes": 15
+                  "durationMinutes": 15,
+                  "language": "en"
                 }
                 """
 )
@@ -41,6 +42,9 @@ public record EducationalMaterialResource(
         String imageUrl,
 
         @Schema(description = "Duration in minutes to complete the material", example = "15")
-        Integer durationMinutes
+        Integer durationMinutes,
+
+        @Schema(description = "Material language", example = "en")
+        String language
 ) {
 }

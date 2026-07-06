@@ -22,6 +22,7 @@ public class EducationalMaterial extends AbstractDomainAggregateRoot<Educational
     private MaterialCategory category;
     private String imageUrl;
     private Integer durationMinutes;
+    private String language;
 
     public EducationalMaterial(
             Long id,
@@ -31,7 +32,8 @@ public class EducationalMaterial extends AbstractDomainAggregateRoot<Educational
             MaterialType materialType,
             MaterialCategory category,
             String imageUrl,
-            Integer durationMinutes
+            Integer durationMinutes,
+            String language
     ) {
         this.id = id;
         this.title = Objects.requireNonNull(title, "title must not be null");
@@ -41,6 +43,7 @@ public class EducationalMaterial extends AbstractDomainAggregateRoot<Educational
         this.category = Objects.requireNonNull(category, "category must not be null");
         this.imageUrl = imageUrl;
         this.durationMinutes = durationMinutes;
+        this.language = language;
     }
 
     public EducationalMaterial(
@@ -50,9 +53,10 @@ public class EducationalMaterial extends AbstractDomainAggregateRoot<Educational
             MaterialType materialType,
             MaterialCategory category,
             String imageUrl,
-            Integer durationMinutes
+            Integer durationMinutes,
+            String language
     ) {
-        this(null, title, description, content, materialType, category, imageUrl, durationMinutes);
+        this(null, title, description, content, materialType, category, imageUrl, durationMinutes, language);
     }
 
     public String getTitle() {
@@ -81,6 +85,10 @@ public class EducationalMaterial extends AbstractDomainAggregateRoot<Educational
 
     public Integer getDurationMinutes() {
         return durationMinutes;
+    }
+
+    public String getLanguage() {
+        return language;
     }
 
     public void onCreated() {
