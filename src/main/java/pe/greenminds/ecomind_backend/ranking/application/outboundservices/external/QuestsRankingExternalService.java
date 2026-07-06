@@ -13,7 +13,6 @@ import java.util.List;
 
 @Service
 public class QuestsRankingExternalService {
-
     private final FamilyPlanRepository familyPlanRepository;
     private final FamilyPlanItemRepository familyPlanItemRepository;
     private final QuestRepository questRepository;

@@ -37,6 +37,15 @@ public interface MinigameAttemptPersistenceRepository
             @Param("since") OffsetDateTime since
     );
 
+    @Query("""
+            select count(distinct attempt.questId)
+            from MinigameAttemptPersistenceEntity attempt
+            where attempt.userId in :userIds
+                and attempt.status = pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.MinigameAttemptStatus.COMPLETED
+                and (attempt.givenGems > 0 or attempt.givenEcopoints > 0)
+            """)
+    long countRewardedCompletedByUserIds(@Param("userIds") List<Long> userIds);
+
     @Modifying
     void deleteByMinigameId(Long minigameId);
 }

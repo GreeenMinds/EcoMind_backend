@@ -43,4 +43,9 @@ public class PostRepositoryImpl implements PostRepository {
     @Override
     public boolean existsById(Long id) {return postPersistenceRepository.existsById(id);}
 
+    @Override
+    public int countByCommunityId(Long communityId) {
+        return (int) postPersistenceRepository.countByCommunityId(communityId);
+    }
+
 }

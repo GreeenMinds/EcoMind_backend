@@ -125,6 +125,22 @@ public class QuestUserRepositoryImpl implements QuestUserRepository {
     }
 
     @Override
+    public int countByUserIdsAndStatusAndQuestTypes(
+            List<Long> userIds,
+            QuestStatus status,
+            List<QuestType> questTypes
+    ) {
+        if (userIds == null || userIds.isEmpty() || questTypes == null || questTypes.isEmpty()) {
+            return 0;
+        }
+        return (int) questUserPersistenceRepository.countByUserIdsAndStatusAndQuestTypes(
+                userIds,
+                status,
+                questTypes
+        );
+    }
+
+    @Override
     public boolean existsByUserIdAndQuestId(Long userId, Long questId) {
         return questUserPersistenceRepository.existsByUserIdAndQuestId(userId, questId);
     }

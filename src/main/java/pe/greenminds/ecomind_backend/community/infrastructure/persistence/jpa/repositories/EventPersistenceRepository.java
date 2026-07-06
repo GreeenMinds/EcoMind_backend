@@ -27,4 +27,6 @@ public interface EventPersistenceRepository extends JpaRepository<EventPersisten
             @Param("date") LocalDate date,
             @Param("location") String location
     );
+
+    long countByCommunityId(Long communityId);
 }

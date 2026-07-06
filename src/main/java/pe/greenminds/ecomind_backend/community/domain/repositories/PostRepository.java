@@ -18,4 +18,6 @@ public interface PostRepository {
     void deleteById(Long id);
 
     boolean existsById(Long id);
+
+    int countByCommunityId(Long communityId);
 }
