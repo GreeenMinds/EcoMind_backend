@@ -7,15 +7,7 @@ import pe.greenminds.ecomind_backend.shared.infrastructure.persistence.jpa.Audit
 import java.time.LocalDate;
 
 @Entity
-@Table(
-        name = "user_quest",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_user_quest_user_id_quest_id",
-                        columnNames = {"user_id", "quest_id"}
-                )
-        }
-)
+@Table(name = "user_quest")
 public class QuestUserPersistenceEntity extends AuditableAbstractPersistenceEntity {
     @Column(name = "user_id",  nullable=false)
     private Long userId;

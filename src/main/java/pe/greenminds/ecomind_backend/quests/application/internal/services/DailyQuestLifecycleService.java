@@ -17,6 +17,7 @@ import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestUserReposit
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,10 +59,11 @@ public class DailyQuestLifecycleService {
                 today
         );
         if (existingQuest.isPresent()) {
+            ensureActivitiesFromTemplate(existingQuest.get());
             return existingQuest;
         }
 
-        var template = questRepository.findLatestTemplateByType(QuestType.DAILY_QUEST);
+        var template = findLatestDailyQuestWithActivities(Optional.empty());
         if (template.isEmpty()) {
             return Optional.empty();
         }
@@ -189,6 +191,31 @@ public class DailyQuestLifecycleService {
                     )
             );
         }
+    }
+
+    private void ensureActivitiesFromTemplate(Quest quest) {
+        if (!activityRepository.findByQuestsIdOrderByOrderAsc(quest.getId()).isEmpty()) {
+            return;
+        }
+
+        findLatestDailyQuestWithActivities(Optional.of(quest.getId()))
+                .ifPresent(template -> cloneActivities(template.getId(), quest.getId()));
+    }
+
+    private Optional<Quest> findLatestDailyQuestWithActivities(Optional<Long> excludedQuestId) {
+        return questRepository.findAll()
+                .stream()
+                .filter(quest -> quest.getType() == QuestType.DAILY_QUEST)
+                .filter(quest -> excludedQuestId.map(id -> !id.equals(quest.getId())).orElse(true))
+                .filter(quest -> !activityRepository.findByQuestsIdOrderByOrderAsc(quest.getId()).isEmpty())
+                .max(
+                        Comparator
+                                .comparing(
+                                        Quest::getAssignedDate,
+                                        Comparator.nullsFirst(Comparator.naturalOrder())
+                                )
+                                .thenComparing(Quest::getId)
+                );
     }
 
     private void expire(List<pe.greenminds.ecomind_backend.quests.domain.model.aggregates.QuestUser> questUsers) {

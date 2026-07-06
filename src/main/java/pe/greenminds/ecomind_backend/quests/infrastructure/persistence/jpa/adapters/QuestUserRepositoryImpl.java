@@ -51,7 +51,8 @@ public class QuestUserRepositoryImpl implements QuestUserRepository {
 
     @Override
     public Optional<QuestUser> findByUserIdAndQuestId(Long userId, Long questId) {
-        return questUserPersistenceRepository.findByUserIdAndQuestId(userId, questId)
+        return questUserPersistenceRepository
+                .findFirstByUserIdAndQuestIdOrderByIdDesc(userId, questId)
                 .map(QuestUserPersistenceAssembler::toDomainFromPersistence);
     }
 
