@@ -2,8 +2,10 @@ package pe.greenminds.ecomind_backend.quests.domain.repositories;
 
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.QuestUser;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestStatus;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
 
 import java.util.List;
+import java.time.LocalDate;
 import java.util.Optional;
 
 public interface QuestUserRepository {
@@ -19,6 +21,17 @@ public interface QuestUserRepository {
 
     List<QuestUser> findByQuestId(Long questId);
     List<QuestUser> findByQuestIdAndStatusIn(Long questId, List<QuestStatus> statuses);
+    List<QuestUser> findDailyQuestUsersBeforeDateAndStatusIn(
+            QuestType questType,
+            LocalDate assignedDate,
+            List<QuestStatus> statuses
+    );
+    List<QuestUser> findDailyQuestUsersByUserIdBeforeDateAndStatusIn(
+            Long userId,
+            QuestType questType,
+            LocalDate assignedDate,
+            List<QuestStatus> statuses
+    );
 
     boolean existsByUserIdAndQuestId(Long userId, Long questId);
     boolean existsByUserIdAndQuestIdAndStatusIn(

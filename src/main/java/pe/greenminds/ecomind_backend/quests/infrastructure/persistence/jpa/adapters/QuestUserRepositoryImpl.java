@@ -4,10 +4,12 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Repository;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.QuestUser;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestStatus;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestUserRepository;
 import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.assemblers.QuestUserPersistenceAssembler;
 import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.repositories.QuestUserPersistenceRepository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -82,6 +84,33 @@ public class QuestUserRepositoryImpl implements QuestUserRepository {
             List<QuestStatus> statuses
     ) {
         return questUserPersistenceRepository.findByQuestIdAndStatusIn(questId, statuses)
+                .stream()
+                .map(QuestUserPersistenceAssembler::toDomainFromPersistence)
+                .toList();
+    }
+
+    @Override
+    public List<QuestUser> findDailyQuestUsersBeforeDateAndStatusIn(
+            QuestType questType,
+            LocalDate assignedDate,
+            List<QuestStatus> statuses
+    ) {
+        return questUserPersistenceRepository
+                .findDailyQuestUsersBeforeDateAndStatusIn(questType, assignedDate, statuses)
+                .stream()
+                .map(QuestUserPersistenceAssembler::toDomainFromPersistence)
+                .toList();
+    }
+
+    @Override
+    public List<QuestUser> findDailyQuestUsersByUserIdBeforeDateAndStatusIn(
+            Long userId,
+            QuestType questType,
+            LocalDate assignedDate,
+            List<QuestStatus> statuses
+    ) {
+        return questUserPersistenceRepository
+                .findDailyQuestUsersByUserIdBeforeDateAndStatusIn(userId, questType, assignedDate, statuses)
                 .stream()
                 .map(QuestUserPersistenceAssembler::toDomainFromPersistence)
                 .toList();

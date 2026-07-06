@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import pe.greenminds.ecomind_backend.monetization.domain.model.valueobjects.MovementOrigin;
 import pe.greenminds.ecomind_backend.quests.application.commandservices.QuestUserCommandService;
+import pe.greenminds.ecomind_backend.quests.application.internal.services.DailyQuestLifecycleService;
 import pe.greenminds.ecomind_backend.quests.application.internal.services.QuestRewardService;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.ActivityUser;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.Quest;
@@ -36,6 +37,7 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
     private final CollabQuestSessionRepository collabQuestSessionRepository;
     private final CollabQuestMemberRepository collabQuestMemberRepository;
     private final QuestRewardService questRewardService;
+    private final DailyQuestLifecycleService dailyQuestLifecycleService;
 
     public QuestUserCommandServiceImpl(
             QuestUserRepository questUserRepository,
@@ -44,7 +46,8 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
             ActivityRepository activityRepository,
             CollabQuestSessionRepository collabQuestSessionRepository,
             CollabQuestMemberRepository collabQuestMemberRepository,
-            QuestRewardService questRewardService
+            QuestRewardService questRewardService,
+            DailyQuestLifecycleService dailyQuestLifecycleService
     ) {
         this.questUserRepository = questUserRepository;
         this.questRepository = questRepository;
@@ -53,6 +56,7 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
         this.collabQuestSessionRepository = collabQuestSessionRepository;
         this.collabQuestMemberRepository = collabQuestMemberRepository;
         this.questRewardService = questRewardService;
+        this.dailyQuestLifecycleService = dailyQuestLifecycleService;
     }
 
     @Transactional
@@ -84,6 +88,8 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
                     )
             );
         }
+
+        dailyQuestLifecycleService.expireOpenDailyQuestsForUser(command.userId());
 
         if (activityRepository.countByQuestId(command.questId()) < 1) {
             return Result.failure(
@@ -177,6 +183,17 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
             );
         }
 
+        dailyQuestLifecycleService.expireOpenDailyQuestsForUser(questUser.get().getUserId());
+        questUser = questUserRepository.findById(command.questUserId());
+        if (questUser.isEmpty()) {
+            return Result.failure(
+                    ApplicationError.notFound("QuestUser", command.questUserId().toString())
+            );
+        }
+        if (questUser.get().getStatus() == QuestStatus.COMPLETED) {
+            return Result.success(questUser.get());
+        }
+
         if (questUser.get().getCollaborativeSessionId() != null) {
             return completeCollaborativeQuest(questUser.get());
         }
@@ -192,9 +209,16 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
         }
 
         try {
+            var wasExpired = questUser.get().isExpired();
             questUser.get().complete();
             var savedQuestUser = questUserRepository.save(questUser.get());
-            grantQuestUserReward(savedQuestUser, quest.get(), MovementOrigin.QUEST, savedQuestUser.getId());
+            grantQuestUserReward(
+                    savedQuestUser,
+                    quest.get(),
+                    MovementOrigin.QUEST,
+                    savedQuestUser.getId(),
+                    wasExpired
+            );
             return Result.success(savedQuestUser);
         } catch (IllegalStateException exception) {
             return Result.failure(
@@ -319,7 +343,8 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
                         questUser,
                         quest.get(),
                         MovementOrigin.QUEST,
-                        savedSession.getId()
+                        savedSession.getId(),
+                        false
                 );
             }
 
@@ -338,12 +363,17 @@ public class QuestUserCommandServiceImpl implements QuestUserCommandService {
             QuestUser questUser,
             Quest quest,
             MovementOrigin origin,
-            Long originId
+            Long originId,
+            boolean expiredReward
     ) {
+        var originalGems = quest.getGems() == null ? 0 : quest.getGems();
+        var originalEcopoints = quest.getEcopoints() == null ? 0 : quest.getEcopoints();
+        var gems = expiredReward ? 0 : originalGems;
+        var ecopoints = expiredReward ? 0 : originalEcopoints;
         questRewardService.grantRewards(
                 questUser.getUserId(),
-                quest.getGems(),
-                quest.getEcopoints(),
+                gems,
+                ecopoints,
                 origin,
                 originId
         );

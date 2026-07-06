@@ -3,10 +3,14 @@ package pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.repo
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestStatus;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
 import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.entities.QuestUserPersistenceEntity;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 @Repository
 public interface QuestUserPersistenceRepository extends JpaRepository<QuestUserPersistenceEntity, Long> {
@@ -26,6 +30,34 @@ public interface QuestUserPersistenceRepository extends JpaRepository<QuestUserP
     List<QuestUserPersistenceEntity> findByQuestIdAndStatusIn(
             Long questId,
             List<QuestStatus> statuses
+    );
+
+    @Query("""
+    SELECT qu FROM QuestUserPersistenceEntity qu
+    JOIN QuestPersistenceEntity q ON q.id = qu.questId
+    WHERE q.questType = :questType
+      AND q.assignedDate < :assignedDate
+      AND qu.status IN :statuses
+    """)
+    List<QuestUserPersistenceEntity> findDailyQuestUsersBeforeDateAndStatusIn(
+            @Param("questType") QuestType questType,
+            @Param("assignedDate") LocalDate assignedDate,
+            @Param("statuses") List<QuestStatus> statuses
+    );
+
+    @Query("""
+    SELECT qu FROM QuestUserPersistenceEntity qu
+    JOIN QuestPersistenceEntity q ON q.id = qu.questId
+    WHERE qu.userId = :userId
+      AND q.questType = :questType
+      AND q.assignedDate < :assignedDate
+      AND qu.status IN :statuses
+    """)
+    List<QuestUserPersistenceEntity> findDailyQuestUsersByUserIdBeforeDateAndStatusIn(
+            @Param("userId") Long userId,
+            @Param("questType") QuestType questType,
+            @Param("assignedDate") LocalDate assignedDate,
+            @Param("statuses") List<QuestStatus> statuses
     );
 
     boolean existsByUserIdAndQuestId(

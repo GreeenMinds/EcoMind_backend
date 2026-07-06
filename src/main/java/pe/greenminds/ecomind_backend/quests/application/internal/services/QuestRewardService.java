@@ -13,9 +13,12 @@ import pe.greenminds.ecomind_backend.profile.domain.repositories.UserRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Service
 public class QuestRewardService {
+    private static final ZoneId DAILY_ZONE = ZoneId.of("America/Lima");
+
     private final UserRepository userRepository;
     private final GemMovementRepository gemMovementRepository;
     private final UserMultiplierRepository userMultiplierRepository;
@@ -50,7 +53,7 @@ public class QuestRewardService {
                         "User %d not found for rewards".formatted(userId)
                 ));
 
-        var today = LocalDate.now();
+        var today = LocalDate.now(DAILY_ZONE);
         var shouldIncreaseStreak = user.getLastStreakDate() == null
                 || user.getLastStreakDate().isBefore(today);
 
