@@ -5,11 +5,13 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pe.greenminds.ecomind_backend.ranking.application.internal.services.LeaderboardService;
 import pe.greenminds.ecomind_backend.ranking.domain.model.queries.GetAllRankingsQuery;
 import pe.greenminds.ecomind_backend.ranking.domain.model.queries.GetRankingByIdQuery;
 import pe.greenminds.ecomind_backend.ranking.domain.services.RankingCommandService;
 import pe.greenminds.ecomind_backend.ranking.domain.services.RankingQueryService;
 import pe.greenminds.ecomind_backend.ranking.interfaces.rest.resources.CreateRankingResource;
+import pe.greenminds.ecomind_backend.ranking.interfaces.rest.resources.LeaderboardEntryResource;
 import pe.greenminds.ecomind_backend.ranking.interfaces.rest.resources.RankingResource;
 import pe.greenminds.ecomind_backend.ranking.interfaces.rest.resources.UpdateRankingResource;
 import pe.greenminds.ecomind_backend.ranking.interfaces.rest.transform.CreateRankingCommandFromResourceAssembler;
@@ -28,11 +30,14 @@ public class RankingsController {
 
     private final RankingCommandService rankingCommandService;
     private final RankingQueryService rankingQueryService;
+    private final LeaderboardService leaderboardService;
 
     public RankingsController(RankingCommandService rankingCommandService,
-                              RankingQueryService rankingQueryService) {
+                              RankingQueryService rankingQueryService,
+                              LeaderboardService leaderboardService) {
         this.rankingCommandService = rankingCommandService;
         this.rankingQueryService = rankingQueryService;
+        this.leaderboardService = leaderboardService;
     }
 
     @PostMapping
@@ -59,6 +64,14 @@ public class RankingsController {
                 .map(RankingResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(rankingResources);
+    }
+
+    @GetMapping("/{rankingType}/leaderboard")
+    public ResponseEntity<List<LeaderboardEntryResource>> getLeaderboard(
+            @PathVariable String rankingType,
+            @RequestParam(required = false) Long currentUserId) {
+        var entries = leaderboardService.getLeaderboard(rankingType, currentUserId);
+        return ResponseEntity.ok(entries);
     }
 
     @GetMapping("/{rankingId}")
