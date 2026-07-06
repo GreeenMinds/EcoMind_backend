@@ -13,6 +13,7 @@ public interface QuestUserRepository {
     Optional<QuestUser> findById(Long id);
 
     Optional<QuestUser> findByUserIdAndQuestId(Long userId, Long questId);
+    Optional<QuestUser> findFirstByUserIdAndQuestId(Long userId, Long questId);
     Optional<QuestUser> findFirstByUserIdAndQuestIdAndStatusIn(
             Long userId,
             Long questId,

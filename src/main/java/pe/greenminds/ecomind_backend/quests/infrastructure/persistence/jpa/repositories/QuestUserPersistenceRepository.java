@@ -19,6 +19,11 @@ public interface QuestUserPersistenceRepository extends JpaRepository<QuestUserP
             Long questId
     );
 
+    Optional<QuestUserPersistenceEntity> findFirstByUserIdAndQuestIdOrderByIdAsc(
+            Long userId,
+            Long questId
+    );
+
     Optional<QuestUserPersistenceEntity> findFirstByUserIdAndQuestIdAndStatusInOrderByIdDesc(
             Long userId,
             Long questId,

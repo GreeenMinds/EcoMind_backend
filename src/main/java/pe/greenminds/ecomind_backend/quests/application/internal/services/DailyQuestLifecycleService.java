@@ -1,13 +1,17 @@
 package pe.greenminds.ecomind_backend.quests.application.internal.services;
 
 import jakarta.transaction.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.Activity;
+import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.ActivityUser;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.Quest;
+import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.QuestUser;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestStatus;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.ActivityRepository;
+import pe.greenminds.ecomind_backend.quests.domain.repositories.ActivityUserRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestRepository;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestUserRepository;
 
@@ -28,15 +32,18 @@ public class DailyQuestLifecycleService {
     private final QuestRepository questRepository;
     private final QuestUserRepository questUserRepository;
     private final ActivityRepository activityRepository;
+    private final ActivityUserRepository activityUserRepository;
 
     public DailyQuestLifecycleService(
             QuestRepository questRepository,
             QuestUserRepository questUserRepository,
-            ActivityRepository activityRepository
+            ActivityRepository activityRepository,
+            ActivityUserRepository activityUserRepository
     ) {
         this.questRepository = questRepository;
         this.questUserRepository = questUserRepository;
         this.activityRepository = activityRepository;
+        this.activityUserRepository = activityUserRepository;
     }
 
     public LocalDate today() {
@@ -89,6 +96,56 @@ public class DailyQuestLifecycleService {
                         EXPIRABLE_STATUSES
                 )
         );
+    }
+
+    public synchronized Optional<QuestUser> ensureTodayDailyQuestForUser(Long userId) {
+        expireOpenDailyQuestsForUser(userId);
+
+        var dailyQuest = ensureTodayDailyQuest();
+        if (dailyQuest.isEmpty()) {
+            return Optional.empty();
+        }
+
+        var existingQuestUser = questUserRepository.findFirstByUserIdAndQuestId(
+                userId,
+                dailyQuest.get().getId()
+        );
+        if (existingQuestUser.isPresent()) {
+            return existingQuestUser;
+        }
+
+        var activities = activityRepository.findByQuestsIdOrderByOrderAsc(
+                dailyQuest.get().getId()
+        );
+        if (activities.isEmpty()) {
+            return Optional.empty();
+        }
+
+        QuestUser savedQuestUser;
+        try {
+            savedQuestUser = questUserRepository.save(
+                    new QuestUser(userId, dailyQuest.get().getId(), null)
+            );
+        } catch (DataIntegrityViolationException ignored) {
+            return questUserRepository.findFirstByUserIdAndQuestId(
+                    userId,
+                    dailyQuest.get().getId()
+            );
+        }
+
+        for (var activity : activities) {
+            activityUserRepository.save(
+                    new ActivityUser(
+                            savedQuestUser.getId(),
+                            activity.getId(),
+                            activity.getDescription(),
+                            activity.getActivityConfiguration(),
+                            null
+                    )
+            );
+        }
+
+        return Optional.of(savedQuestUser);
     }
 
     @Scheduled(cron = "0 5 0 * * *", zone = "America/Lima")

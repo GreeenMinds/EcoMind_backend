@@ -56,7 +56,11 @@ public class QuestUserQueryServiceImpl implements QuestUserQueryService {
 
     @Override
     public List<QuestUser> handle(GetQuestUsersByUserIdAndStatusQuery query) {
-        dailyQuestLifecycleService.expireOpenDailyQuestsForUser(query.userId());
+        if (query.status() == pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestStatus.IN_PROGRESS) {
+            dailyQuestLifecycleService.ensureTodayDailyQuestForUser(query.userId());
+        } else {
+            dailyQuestLifecycleService.expireOpenDailyQuestsForUser(query.userId());
+        }
         return questUserRepository.findByUserIdAndStatus(query.userId(), query.status());
     }
 
