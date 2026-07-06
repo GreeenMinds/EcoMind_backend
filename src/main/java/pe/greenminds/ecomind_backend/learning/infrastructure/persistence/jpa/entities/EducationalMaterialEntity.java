@@ -29,6 +29,9 @@ public class EducationalMaterialEntity extends AuditableAbstractPersistenceEntit
     @Column(name = "image_url")
     private String imageUrl;
 
+    @Column(name = "video_url")
+    private String videoUrl;
+
     @Column(name = "duration_minutes")
     private Integer durationMinutes;
 
@@ -81,6 +84,14 @@ public class EducationalMaterialEntity extends AuditableAbstractPersistenceEntit
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public String getVideoUrl() {
+        return videoUrl;
+    }
+
+    public void setVideoUrl(String videoUrl) {
+        this.videoUrl = videoUrl;
     }
 
     public Integer getDurationMinutes() {

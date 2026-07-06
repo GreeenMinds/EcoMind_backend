@@ -29,6 +29,7 @@ public class EducationalMaterialCommandServiceImpl implements EducationalMateria
                     command.materialType(),
                     command.category(),
                     command.imageUrl(),
+                    null,
                     command.durationMinutes(),
                     null
             );
@@ -61,6 +62,7 @@ public class EducationalMaterialCommandServiceImpl implements EducationalMateria
                     command.materialType(),
                     command.category(),
                     command.imageUrl(),
+                    null,
                     command.durationMinutes(),
                     existing.get().getLanguage()
             );
