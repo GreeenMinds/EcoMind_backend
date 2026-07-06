@@ -66,6 +66,16 @@ public class MinigameAttemptRepositoryImpl implements MinigameAttemptRepository 
     }
 
     @Override
+    public int countRewardedCompletedByUserIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return 0;
+        }
+        return (int) minigameAttemptPersistenceRepository.countRewardedCompletedByUserIds(
+                userIds
+        );
+    }
+
+    @Override
     public void deleteByMinigameId(Long minigameId) {
         minigameAttemptPersistenceRepository.deleteByMinigameId(minigameId);
     }

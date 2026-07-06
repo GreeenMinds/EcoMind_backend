@@ -20,4 +20,6 @@ public interface PostPersistenceRepository extends JpaRepository<PostPersistence
             @Param("communityId") Long communityId,
             @Param("userId") Long userId
     );
+
+    long countByCommunityId(Long communityId);
 }

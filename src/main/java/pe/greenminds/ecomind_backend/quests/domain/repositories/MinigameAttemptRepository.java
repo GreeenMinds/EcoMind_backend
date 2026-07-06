@@ -17,5 +17,6 @@ public interface MinigameAttemptRepository {
             Long minigameId,
             OffsetDateTime since
     );
+    int countRewardedCompletedByUserIds(List<Long> userIds);
     void deleteByMinigameId(Long minigameId);
 }

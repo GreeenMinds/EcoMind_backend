@@ -70,6 +70,19 @@ public interface QuestUserPersistenceRepository extends JpaRepository<QuestUserP
             @Param("statuses") List<QuestStatus> statuses
     );
 
+    @Query("""
+    SELECT COUNT(DISTINCT qu.questId) FROM QuestUserPersistenceEntity qu
+    JOIN QuestPersistenceEntity q ON q.id = qu.questId
+    WHERE qu.userId IN :userIds
+      AND qu.status = :status
+      AND q.questType IN :questTypes
+    """)
+    long countByUserIdsAndStatusAndQuestTypes(
+            @Param("userIds") List<Long> userIds,
+            @Param("status") QuestStatus status,
+            @Param("questTypes") List<QuestType> questTypes
+    );
+
     boolean existsByUserIdAndQuestId(
             Long userId,
             Long questId
