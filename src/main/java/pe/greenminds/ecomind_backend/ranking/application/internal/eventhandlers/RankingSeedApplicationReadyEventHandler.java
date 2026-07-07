@@ -30,9 +30,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Component
 public class RankingSeedApplicationReadyEventHandler {
+
+    private record SeedUserDef(String email, String name, int ecopoints) {}
+
+    private static final List<SeedUserDef> SEED_USERS = List.of(
+            new SeedUserDef("carla.verde@ranking-seed.com", "Carla Verde", 780),
+            new SeedUserDef("miguel.rios@ranking-seed.com", "Miguel Ríos", 450),
+            new SeedUserDef("laura.solar@ranking-seed.com", "Laura Solar", 320),
+            new SeedUserDef("pedro.bosque@ranking-seed.com", "Pedro Bosque", 150),
+            new SeedUserDef("ana.tierra@ranking-seed.com", "Ana Tierra", 50),
+            new SeedUserDef("sofia.solar@ranking-seed.com", "Sofía Solar", 820),
+            new SeedUserDef("mateo.solar@ranking-seed.com", "Mateo Solar", 680),
+            new SeedUserDef("valentina.solar@ranking-seed.com", "Valentina Solar", 310),
+            new SeedUserDef("diego.terra@ranking-seed.com", "Diego Terra", 550),
+            new SeedUserDef("camila.terra@ranking-seed.com", "Camila Terra", 470),
+            new SeedUserDef("santiago.terra@ranking-seed.com", "Santiago Terra", 230),
+            new SeedUserDef("isabella.terra@ranking-seed.com", "Isabella Terra", 120),
+            new SeedUserDef("lucia.eco@ranking-seed.com", "Lucía Eco", 400),
+            new SeedUserDef("gabriel.eco@ranking-seed.com", "Gabriel Eco", 340),
+            new SeedUserDef("emma.eco@ranking-seed.com", "Emma Eco", 180)
+    );
 
     private final RankingRepository rankingRepository;
     private final ScoreEntryRepository scoreEntryRepository;
@@ -88,17 +109,7 @@ public class RankingSeedApplicationReadyEventHandler {
     }
 
     private void seedUsers() {
-        record SeedUser(String email, String name, int ecopoints) {}
-
-        var seedUsers = List.of(
-                new SeedUser("carla.verde@ranking-seed.com", "Carla Verde", 780),
-                new SeedUser("miguel.rios@ranking-seed.com", "Miguel Ríos", 450),
-                new SeedUser("laura.solar@ranking-seed.com", "Laura Solar", 320),
-                new SeedUser("pedro.bosque@ranking-seed.com", "Pedro Bosque", 150),
-                new SeedUser("ana.tierra@ranking-seed.com", "Ana Tierra", 50)
-        );
-
-        for (var su : seedUsers) {
+        for (var su : SEED_USERS) {
             if (userRepository.existsByEmail(su.email)) continue;
             var user = new User(null, 1L, su.email, null, su.name, 0, null,
                     OffsetDateTime.now(), 0, su.ecopoints, null);
@@ -108,33 +119,56 @@ public class RankingSeedApplicationReadyEventHandler {
     }
 
     private void seedFamilies() {
-        var family = familyRepository.findAll().stream()
-                .filter(f -> "Familia Verde".equals(f.getName()))
-                .findFirst()
-                .orElseGet(() -> {
-                    var saved = familyRepository.save(new Family(null, "Familia Verde", "eco-friendly"));
-                    System.out.println("Ranking seed: created family 'Familia Verde' with id " + saved.getId());
-                    return saved;
-                });
+        record FamilyMemberDef(String email, FamilyRole role) {}
+        record FamilyDef(String name, String commitment, List<FamilyMemberDef> members) {}
 
-        record FamilyMember(String email, FamilyRole role) {}
+        var families = List.of(
+                new FamilyDef("Familia Verde", "eco-friendly", List.of(
+                        new FamilyMemberDef("carla.verde@ranking-seed.com", FamilyRole.PARENT),
+                        new FamilyMemberDef("miguel.rios@ranking-seed.com", FamilyRole.PARENT),
+                        new FamilyMemberDef("laura.solar@ranking-seed.com", FamilyRole.CHILD),
+                        new FamilyMemberDef("pedro.bosque@ranking-seed.com", FamilyRole.CHILD),
+                        new FamilyMemberDef("ana.tierra@ranking-seed.com", FamilyRole.CHILD),
+                        new FamilyMemberDef(iamSeedEmail, FamilyRole.PARENT)
+                )),
+                new FamilyDef("Familia Solar", "energía renovable", List.of(
+                        new FamilyMemberDef("sofia.solar@ranking-seed.com", FamilyRole.PARENT),
+                        new FamilyMemberDef("mateo.solar@ranking-seed.com", FamilyRole.PARENT),
+                        new FamilyMemberDef("valentina.solar@ranking-seed.com", FamilyRole.CHILD)
+                )),
+                new FamilyDef("Familia Terra", "cuidado del planeta", List.of(
+                        new FamilyMemberDef("diego.terra@ranking-seed.com", FamilyRole.PARENT),
+                        new FamilyMemberDef("camila.terra@ranking-seed.com", FamilyRole.PARENT),
+                        new FamilyMemberDef("santiago.terra@ranking-seed.com", FamilyRole.CHILD),
+                        new FamilyMemberDef("isabella.terra@ranking-seed.com", FamilyRole.CHILD)
+                )),
+                new FamilyDef("EcoAmigos", "amigos del ambiente", List.of(
+                        new FamilyMemberDef("lucia.eco@ranking-seed.com", FamilyRole.PARENT),
+                        new FamilyMemberDef("gabriel.eco@ranking-seed.com", FamilyRole.PARENT),
+                        new FamilyMemberDef("emma.eco@ranking-seed.com", FamilyRole.CHILD)
+                ))
+        );
 
-        for (var m : List.of(
-                new FamilyMember("carla.verde@ranking-seed.com", FamilyRole.PARENT),
-                new FamilyMember("miguel.rios@ranking-seed.com", FamilyRole.PARENT),
-                new FamilyMember("laura.solar@ranking-seed.com", FamilyRole.CHILD),
-                new FamilyMember("pedro.bosque@ranking-seed.com", FamilyRole.CHILD),
-                new FamilyMember("ana.tierra@ranking-seed.com", FamilyRole.CHILD),
-                new FamilyMember(iamSeedEmail, FamilyRole.PARENT)
-        )) {
-            var user = userRepository.findByEmail(m.email);
-            if (user.isEmpty()) {
-                System.out.println("Ranking seed: user " + m.email + " not found yet, will retry on next deploy");
-                continue;
+        for (var fd : families) {
+            var family = familyRepository.findAll().stream()
+                    .filter(f -> fd.name().equals(f.getName()))
+                    .findFirst()
+                    .orElseGet(() -> {
+                        var saved = familyRepository.save(new Family(null, fd.name(), fd.commitment()));
+                        System.out.println("Ranking seed: created family '" + fd.name() + "' with id " + saved.getId());
+                        return saved;
+                    });
+
+            for (var m : fd.members()) {
+                var user = userRepository.findByEmail(m.email());
+                if (user.isEmpty()) {
+                    System.out.println("Ranking seed: user " + m.email() + " not found yet, will retry on next deploy");
+                    continue;
+                }
+                if (familyUserRepository.existsByUserIdAndFamilyId(user.get().getId(), family.getId())) continue;
+                familyUserRepository.save(new FamilyUser(null, user.get().getId(), family.getId(), m.role(), OffsetDateTime.now()));
+                System.out.println("Ranking seed: added " + m.email() + " as " + m.role() + " to '" + fd.name() + "'");
             }
-            if (familyUserRepository.existsByUserIdAndFamilyId(user.get().getId(), family.getId())) continue;
-            familyUserRepository.save(new FamilyUser(null, user.get().getId(), family.getId(), m.role, OffsetDateTime.now()));
-            System.out.println("Ranking seed: added " + m.email + " as " + m.role + " to 'Familia Verde'");
         }
     }
 
@@ -146,7 +180,17 @@ public class RankingSeedApplicationReadyEventHandler {
                 new EquipDef("miguel.rios@ranking-seed.com", "Superhéroe Verde"),
                 new EquipDef("laura.solar@ranking-seed.com", "Gorra del Reciclaje"),
                 new EquipDef("pedro.bosque@ranking-seed.com", "Lentes Verdes"),
-                new EquipDef("ana.tierra@ranking-seed.com", "Collar de la Tierra")
+                new EquipDef("ana.tierra@ranking-seed.com", "Collar de la Tierra"),
+                new EquipDef("sofia.solar@ranking-seed.com", "Sombrero Solar"),
+                new EquipDef("mateo.solar@ranking-seed.com", "Gafas Eco-Friendly"),
+                new EquipDef("valentina.solar@ranking-seed.com", "Moño Natural"),
+                new EquipDef("diego.terra@ranking-seed.com", "Mickey Eco Mouse"),
+                new EquipDef("camila.terra@ranking-seed.com", "Sombrero Solar"),
+                new EquipDef("santiago.terra@ranking-seed.com", "Moño Natural"),
+                new EquipDef("isabella.terra@ranking-seed.com", "Collar de la Tierra"),
+                new EquipDef("lucia.eco@ranking-seed.com", "Gafas Eco-Friendly"),
+                new EquipDef("gabriel.eco@ranking-seed.com", "Gorra del Reciclaje"),
+                new EquipDef("emma.eco@ranking-seed.com", "Lentes Verdes")
         )) {
             var userOpt = userRepository.findByEmail(def.userEmail);
             if (userOpt.isEmpty()) continue;
@@ -169,13 +213,16 @@ public class RankingSeedApplicationReadyEventHandler {
     }
 
     private void seedScoreEntries() {
-        if (scoreEntryRepository.count() > 0) return;
+        scoreEntryRepository.deleteAllInBatch();
 
         var users = userRepository.findAll();
         if (users.isEmpty()) {
             System.out.println("Ranking seed: no users found, skipping score entries");
             return;
         }
+
+        var initialEcopointsByEmail = SEED_USERS.stream()
+                .collect(Collectors.toMap(SeedUserDef::email, SeedUserDef::ecopoints));
 
         var rng = new Random(42);
         var now = Instant.now();
@@ -184,8 +231,9 @@ public class RankingSeedApplicationReadyEventHandler {
 
         for (var user : users) {
             var userId = user.getId();
-            var ecopoints = user.getEcopoints() == null ? 100 : user.getEcopoints();
-            var base = Math.max(ecopoints / 5, 20);
+            var initialEcopoints = initialEcopointsByEmail.get(user.getEmail());
+            var baseEcopoints = initialEcopoints != null ? initialEcopoints : user.getEcopoints();
+            var base = Math.max(baseEcopoints / 5, 20);
             int userTotal = 0;
 
             // Recent entries (last 1-3 days) → affect WEEKLY
@@ -225,7 +273,6 @@ public class RankingSeedApplicationReadyEventHandler {
             userEcopoints.put(userId, userTotal);
         }
 
-        // Update each user's ecopoints so GLOBAL ranking reflects the seeded data
         for (var user : users) {
             var total = userEcopoints.get(user.getId());
             user.updateStats(null, total, null, null);
