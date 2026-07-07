@@ -3,6 +3,7 @@ package pe.greenminds.ecomind_backend.iam.application.internal.eventhandlers;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import pe.greenminds.ecomind_backend.community.domain.model.aggregates.Community;
@@ -49,6 +50,7 @@ public class IamSeedApplicationReadyEventHandler {
     }
 
     @EventListener
+    @Order(1)
     public void on(ApplicationReadyEvent event) {
         if (!enabled) {
             return;
