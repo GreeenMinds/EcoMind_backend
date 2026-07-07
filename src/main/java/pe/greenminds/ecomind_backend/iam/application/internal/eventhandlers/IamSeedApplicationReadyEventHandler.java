@@ -5,6 +5,8 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import pe.greenminds.ecomind_backend.community.domain.model.aggregates.Community;
+import pe.greenminds.ecomind_backend.community.domain.repositories.CommunityRepository;
 import pe.greenminds.ecomind_backend.iam.application.commandservices.AuthenticationCommandService;
 import pe.greenminds.ecomind_backend.iam.infrastructure.persistence.jpa.entities.AccountCredentialPersistenceEntity;
 import pe.greenminds.ecomind_backend.iam.infrastructure.persistence.jpa.repositories.AccountCredentialPersistenceRepository;
@@ -13,6 +15,7 @@ import pe.greenminds.ecomind_backend.profile.domain.repositories.UserRepository;
 
 @Component
 public class IamSeedApplicationReadyEventHandler {
+    private final CommunityRepository communityRepository;
     private final AuthenticationCommandService authenticationCommandService;
     private final UserRepository userRepository;
     private final AccountCredentialPersistenceRepository credentialRepository;
@@ -23,7 +26,8 @@ public class IamSeedApplicationReadyEventHandler {
     private final String name;
     private final Long communityId;
 
-    public IamSeedApplicationReadyEventHandler(AuthenticationCommandService authenticationCommandService,
+    public IamSeedApplicationReadyEventHandler(CommunityRepository communityRepository,
+                                              AuthenticationCommandService authenticationCommandService,
                                               UserRepository userRepository,
                                               AccountCredentialPersistenceRepository credentialRepository,
                                               PasswordEncoder passwordEncoder,
@@ -32,6 +36,7 @@ public class IamSeedApplicationReadyEventHandler {
                                               @Value("${iam.seed.password}") String password,
                                               @Value("${iam.seed.name}") String name,
                                               @Value("${iam.seed.community-id:1}") Long communityId) {
+        this.communityRepository = communityRepository;
         this.authenticationCommandService = authenticationCommandService;
         this.userRepository = userRepository;
         this.credentialRepository = credentialRepository;
@@ -50,7 +55,9 @@ public class IamSeedApplicationReadyEventHandler {
         }
         var user = userRepository.findByEmail(email);
         if (user.isEmpty()) {
-            authenticationCommandService.signUp(new SignUpResource(name, email, password, communityId, null, null));
+            var community = communityRepository.findById(communityId)
+                    .orElseGet(() -> communityRepository.save(new Community("General", 0, "Global")));
+            authenticationCommandService.signUp(new SignUpResource(name, email, password, community.getId(), null, null));
             return;
         }
         if (credentialRepository.findByUserId(user.get().getId()).isPresent()) {
