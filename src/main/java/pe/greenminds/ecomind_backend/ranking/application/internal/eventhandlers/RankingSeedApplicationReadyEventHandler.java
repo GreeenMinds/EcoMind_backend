@@ -3,10 +3,9 @@ package pe.greenminds.ecomind_backend.ranking.application.internal.eventhandlers
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import pe.greenminds.ecomind_backend.monetization.domain.model.aggregates.Cosmetic;
 import pe.greenminds.ecomind_backend.monetization.domain.model.aggregates.UserCosmetic;
-import pe.greenminds.ecomind_backend.monetization.domain.model.valueobjects.CosmeticType;
 import pe.greenminds.ecomind_backend.monetization.domain.repositories.CosmeticRepository;
 import pe.greenminds.ecomind_backend.monetization.domain.repositories.UserCosmeticRepository;
 import pe.greenminds.ecomind_backend.profile.domain.model.aggregates.Family;
@@ -43,6 +42,7 @@ public class RankingSeedApplicationReadyEventHandler {
     private final CosmeticRepository cosmeticRepository;
     private final UserCosmeticRepository userCosmeticRepository;
     private final boolean enabled;
+    private final String iamSeedEmail;
 
     public RankingSeedApplicationReadyEventHandler(
             RankingRepository rankingRepository,
@@ -52,7 +52,8 @@ public class RankingSeedApplicationReadyEventHandler {
             FamilyUserRepository familyUserRepository,
             CosmeticRepository cosmeticRepository,
             UserCosmeticRepository userCosmeticRepository,
-            @Value("${ranking.seed.enabled:false}") boolean enabled) {
+            @Value("${ranking.seed.enabled:false}") boolean enabled,
+            @Value("${iam.seed.email}") String iamSeedEmail) {
         this.rankingRepository = rankingRepository;
         this.scoreEntryRepository = scoreEntryRepository;
         this.userRepository = userRepository;
@@ -61,9 +62,11 @@ public class RankingSeedApplicationReadyEventHandler {
         this.cosmeticRepository = cosmeticRepository;
         this.userCosmeticRepository = userCosmeticRepository;
         this.enabled = enabled;
+        this.iamSeedEmail = iamSeedEmail;
     }
 
     @EventListener
+    @Order(3)
     public void on(ApplicationReadyEvent event) {
         if (!enabled) return;
 
@@ -105,57 +108,63 @@ public class RankingSeedApplicationReadyEventHandler {
     }
 
     private void seedFamilies() {
-        if (!familyRepository.findAll().isEmpty()) return;
-
-        var family = familyRepository.save(new Family(null, "Familia Verde", "eco-friendly"));
-        System.out.println("Ranking seed: created family 'Familia Verde' with id " + family.getId());
+        var family = familyRepository.findAll().stream()
+                .filter(f -> "Familia Verde".equals(f.getName()))
+                .findFirst()
+                .orElseGet(() -> {
+                    var saved = familyRepository.save(new Family(null, "Familia Verde", "eco-friendly"));
+                    System.out.println("Ranking seed: created family 'Familia Verde' with id " + saved.getId());
+                    return saved;
+                });
 
         record FamilyMember(String email, FamilyRole role) {}
 
         for (var m : List.of(
                 new FamilyMember("carla.verde@ranking-seed.com", FamilyRole.PARENT),
                 new FamilyMember("miguel.rios@ranking-seed.com", FamilyRole.PARENT),
+                new FamilyMember("laura.solar@ranking-seed.com", FamilyRole.CHILD),
                 new FamilyMember("pedro.bosque@ranking-seed.com", FamilyRole.CHILD),
-                new FamilyMember("ana.tierra@ranking-seed.com", FamilyRole.CHILD)
+                new FamilyMember("ana.tierra@ranking-seed.com", FamilyRole.CHILD),
+                new FamilyMember(iamSeedEmail, FamilyRole.PARENT)
         )) {
             var user = userRepository.findByEmail(m.email);
-            if (user.isEmpty()) continue;
-            if (familyUserRepository.existsByUserId(user.get().getId())) continue;
+            if (user.isEmpty()) {
+                System.out.println("Ranking seed: user " + m.email + " not found yet, will retry on next deploy");
+                continue;
+            }
+            if (familyUserRepository.existsByUserIdAndFamilyId(user.get().getId(), family.getId())) continue;
             familyUserRepository.save(new FamilyUser(null, user.get().getId(), family.getId(), m.role, OffsetDateTime.now()));
             System.out.println("Ranking seed: added " + m.email + " as " + m.role + " to 'Familia Verde'");
         }
     }
 
     private void seedAvatars() {
-        record AvatarDef(String name, String email, String imageUrl) {}
+        record EquipDef(String userEmail, String cosmeticName) {}
 
-        for (var a : List.of(
-                new AvatarDef("Avatar Naturaleza", "carla.verde@ranking-seed.com",
-                        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop"),
-                new AvatarDef("Avatar Océano", "miguel.rios@ranking-seed.com",
-                        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop"),
-                new AvatarDef("Avatar Sol", "laura.solar@ranking-seed.com",
-                        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop"),
-                new AvatarDef("Avatar Bosque", "pedro.bosque@ranking-seed.com",
-                        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop"),
-                new AvatarDef("Avatar Tierra", "ana.tierra@ranking-seed.com",
-                        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop")
+        for (var def : List.of(
+                new EquipDef("carla.verde@ranking-seed.com", "Mickey Eco Mouse"),
+                new EquipDef("miguel.rios@ranking-seed.com", "Superhéroe Verde"),
+                new EquipDef("laura.solar@ranking-seed.com", "Gorra del Reciclaje"),
+                new EquipDef("pedro.bosque@ranking-seed.com", "Lentes Verdes"),
+                new EquipDef("ana.tierra@ranking-seed.com", "Collar de la Tierra")
         )) {
-            var user = userRepository.findByEmail(a.email);
-            if (user.isEmpty()) continue;
+            var userOpt = userRepository.findByEmail(def.userEmail);
+            if (userOpt.isEmpty()) continue;
 
-            var cosmetic = cosmeticRepository.findAll().stream()
-                    .filter(c -> c.getName().equals(a.name))
-                    .findFirst()
-                    .orElseGet(() -> cosmeticRepository.save(
-                            new Cosmetic(a.name, "Avatar personalizado", 0, CosmeticType.AVATAR, a.imageUrl)));
+            var cosmeticOpt = cosmeticRepository.findAll().stream()
+                    .filter(c -> def.cosmeticName.equals(c.getName()))
+                    .findFirst();
+            if (cosmeticOpt.isEmpty()) {
+                System.out.println("Ranking seed: cosmetic '" + def.cosmeticName + "' not found in store, skipping");
+                continue;
+            }
 
-            var alreadyEquipped = userCosmeticRepository.findByUserId(user.get().getId()).stream()
+            var alreadyEquipped = userCosmeticRepository.findByUserId(userOpt.get().getId()).stream()
                     .anyMatch(UserCosmetic::getEquipped);
             if (alreadyEquipped) continue;
 
-            userCosmeticRepository.save(new UserCosmetic(user.get().getId(), cosmetic.getId(), LocalDateTime.now(), true));
-            System.out.println("Ranking seed: equipped avatar for " + a.email);
+            userCosmeticRepository.save(new UserCosmetic(userOpt.get().getId(), cosmeticOpt.get().getId(), LocalDateTime.now(), true));
+            System.out.println("Ranking seed: equipped '" + def.cosmeticName + "' to " + def.userEmail);
         }
     }
 
