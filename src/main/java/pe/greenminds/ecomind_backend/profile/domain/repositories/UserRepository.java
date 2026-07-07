@@ -9,6 +9,7 @@ public interface UserRepository {
     List<User> findAll();
     Optional<User> findById(Long id);
     Optional<User> findByEmail(String email);
+    List<User> findByCommunityId(Long communityId);
     User save(User user);
     void deleteById(Long id);
     boolean existsById(Long id);

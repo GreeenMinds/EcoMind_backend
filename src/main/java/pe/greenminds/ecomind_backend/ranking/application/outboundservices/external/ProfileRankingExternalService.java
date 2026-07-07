@@ -30,6 +30,10 @@ public class ProfileRankingExternalService {
         return userRepository.findAll();
     }
 
+    public List<User> fetchUsersByCommunityId(Long communityId) {
+        return userRepository.findByCommunityId(communityId);
+    }
+
     public Long fetchProfileIdByUserId(Long userId) {
         return userId;
     }

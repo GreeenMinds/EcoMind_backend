@@ -27,7 +27,13 @@ public class LeaderboardService {
     }
 
     public List<LeaderboardEntryResource> getLeaderboard(String type, Long currentUserId) {
-        var users = profileService.fetchAllUsers();
+        return getLeaderboard(type, currentUserId, null);
+    }
+
+    public List<LeaderboardEntryResource> getLeaderboard(String type, Long currentUserId, Long communityId) {
+        var users = communityId != null
+                ? profileService.fetchUsersByCommunityId(communityId)
+                : profileService.fetchAllUsers();
 
         Map<Long, Integer> scoresByUser = switch (type.toUpperCase()) {
             case "GLOBAL" -> computeGlobalScores(users);
