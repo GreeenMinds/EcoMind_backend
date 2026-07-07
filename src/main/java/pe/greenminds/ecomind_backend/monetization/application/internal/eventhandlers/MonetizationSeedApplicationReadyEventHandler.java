@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import pe.greenminds.ecomind_backend.monetization.domain.model.aggregates.Cosmetic;
 import pe.greenminds.ecomind_backend.monetization.domain.model.valueobjects.CosmeticType;
 import pe.greenminds.ecomind_backend.monetization.domain.repositories.CosmeticRepository;
+import pe.greenminds.ecomind_backend.monetization.domain.repositories.UserCosmeticRepository;
 
 import java.util.List;
 
@@ -15,12 +16,15 @@ import java.util.List;
 public class MonetizationSeedApplicationReadyEventHandler {
 
     private final CosmeticRepository cosmeticRepository;
+    private final UserCosmeticRepository userCosmeticRepository;
     private final boolean enabled;
 
     public MonetizationSeedApplicationReadyEventHandler(
             CosmeticRepository cosmeticRepository,
+            UserCosmeticRepository userCosmeticRepository,
             @Value("${monetization.seed.enabled:false}") boolean enabled) {
         this.cosmeticRepository = cosmeticRepository;
+        this.userCosmeticRepository = userCosmeticRepository;
         this.enabled = enabled;
     }
 
@@ -28,6 +32,9 @@ public class MonetizationSeedApplicationReadyEventHandler {
     @Order(2)
     public void on(ApplicationReadyEvent event) {
         if (!enabled) return;
+
+        cleanupOldCustomCosmetics();
+
         if (!cosmeticRepository.findAll().isEmpty()) return;
 
         record CosmeticDef(String name, String description, int price, CosmeticType type, String imageUrl) {}
@@ -70,6 +77,30 @@ public class MonetizationSeedApplicationReadyEventHandler {
         for (var item : items) {
             cosmeticRepository.save(new Cosmetic(item.name, item.description, item.price, item.type, item.imageUrl));
             System.out.println("Monetization seed: created cosmetic '" + item.name + "' (" + item.type + ") - $" + item.price);
+        }
+    }
+
+    private void cleanupOldCustomCosmetics() {
+        List<String> oldNames = List.of(
+                "Avatar Naturaleza", "Avatar Océano", "Avatar Sol",
+                "Avatar Bosque", "Avatar Tierra"
+        );
+
+        var allUserCosmetics = userCosmeticRepository.findAll();
+
+        for (var name : oldNames) {
+            var optional = cosmeticRepository.findAll().stream()
+                    .filter(c -> c.getName().equals(name))
+                    .findFirst();
+            if (optional.isEmpty()) continue;
+
+            var cosmetic = optional.get();
+            allUserCosmetics.stream()
+                    .filter(uc -> uc.getCosmeticId().equals(cosmetic.getId()))
+                    .forEach(uc -> userCosmeticRepository.deleteById(uc.getId()));
+
+            cosmeticRepository.deleteById(cosmetic.getId());
+            System.out.println("Monetization seed: deleted old cosmetic '" + name + "' from store and user assignments");
         }
     }
 }
