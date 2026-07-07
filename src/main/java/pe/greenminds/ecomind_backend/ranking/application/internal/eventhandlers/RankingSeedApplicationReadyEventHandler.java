@@ -213,12 +213,25 @@ public class RankingSeedApplicationReadyEventHandler {
     }
 
     private void seedScoreEntries() {
-        scoreEntryRepository.deleteAllInBatch();
+        var seedEmails = SEED_USERS.stream()
+                .map(SeedUserDef::email)
+                .collect(Collectors.toSet());
+        seedEmails.add(iamSeedEmail);
 
-        var users = userRepository.findAll();
-        if (users.isEmpty()) {
+        var allUsers = userRepository.findAll();
+        if (allUsers.isEmpty()) {
             System.out.println("Ranking seed: no users found, skipping score entries");
             return;
+        }
+
+        var seedUsers = allUsers.stream()
+                .filter(u -> seedEmails.contains(u.getEmail()))
+                .toList();
+
+        // Delete old score entries for seed users only (keep real users' data untouched)
+        for (var user : seedUsers) {
+            var oldEntries = scoreEntryRepository.findByUserId(user.getId());
+            scoreEntryRepository.deleteAll(oldEntries);
         }
 
         var initialEcopointsByEmail = SEED_USERS.stream()
@@ -229,10 +242,10 @@ public class RankingSeedApplicationReadyEventHandler {
         int totalEntries = 0;
         Map<Long, Integer> userEcopoints = new HashMap<>();
 
-        for (var user : users) {
+        for (var user : seedUsers) {
             var userId = user.getId();
-            var initialEcopoints = initialEcopointsByEmail.get(user.getEmail());
-            var baseEcopoints = initialEcopoints != null ? initialEcopoints : user.getEcopoints();
+            var initial = initialEcopointsByEmail.get(user.getEmail());
+            var baseEcopoints = initial != null ? initial : (user.getEcopoints() != null ? user.getEcopoints() : 100);
             var base = Math.max(baseEcopoints / 5, 20);
             int userTotal = 0;
 
@@ -273,12 +286,15 @@ public class RankingSeedApplicationReadyEventHandler {
             userEcopoints.put(userId, userTotal);
         }
 
-        for (var user : users) {
+        // Update ecopoints for seed users only
+        for (var user : seedUsers) {
             var total = userEcopoints.get(user.getId());
-            user.updateStats(null, total, null, null);
-            userRepository.save(user);
+            if (total != null) {
+                user.updateStats(null, total, null, null);
+                userRepository.save(user);
+            }
         }
 
-        System.out.println("Ranking seed: created " + totalEntries + " score entries for " + users.size() + " users and updated their ecopoints");
+        System.out.println("Ranking seed: created " + totalEntries + " score entries for " + seedUsers.size() + " seed users and updated their ecopoints");
     }
 }
