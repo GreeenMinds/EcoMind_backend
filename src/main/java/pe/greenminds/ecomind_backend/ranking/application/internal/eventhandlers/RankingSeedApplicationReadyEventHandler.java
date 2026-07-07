@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import pe.greenminds.ecomind_backend.profile.domain.model.aggregates.User;
 import pe.greenminds.ecomind_backend.profile.domain.repositories.UserRepository;
 import pe.greenminds.ecomind_backend.ranking.domain.model.valueobjects.RankingType;
 import pe.greenminds.ecomind_backend.ranking.infrastructure.persistence.jpa.entities.RankingEntity;
@@ -12,6 +13,7 @@ import pe.greenminds.ecomind_backend.ranking.infrastructure.persistence.jpa.repo
 import pe.greenminds.ecomind_backend.ranking.infrastructure.persistence.jpa.repositories.ScoreEntryRepository;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
@@ -43,6 +45,7 @@ public class RankingSeedApplicationReadyEventHandler {
         if (!enabled) return;
 
         seedRankings();
+        seedUsers();
         seedScoreEntries();
     }
 
@@ -54,6 +57,26 @@ public class RankingSeedApplicationReadyEventHandler {
         rankingRepository.save(new RankingEntity("Monthly Ranking", RankingType.MONTHLY, new Date(), null, true));
 
         System.out.println("Ranking seed: created 3 ranking definitions");
+    }
+
+    private void seedUsers() {
+        record SeedUser(String email, String name, int ecopoints) {}
+
+        var seedUsers = List.of(
+                new SeedUser("carla.verde@ranking-seed.com", "Carla Verde", 780),
+                new SeedUser("miguel.rios@ranking-seed.com", "Miguel Ríos", 450),
+                new SeedUser("laura.solar@ranking-seed.com", "Laura Solar", 320),
+                new SeedUser("pedro.bosque@ranking-seed.com", "Pedro Bosque", 150),
+                new SeedUser("ana.tierra@ranking-seed.com", "Ana Tierra", 50)
+        );
+
+        for (var su : seedUsers) {
+            if (userRepository.existsByEmail(su.email)) continue;
+            var user = new User(null, 1L, su.email, null, su.name, 0, null,
+                    OffsetDateTime.now(), 0, su.ecopoints, null);
+            userRepository.save(user);
+            System.out.println("Ranking seed: created user " + su.name + " with " + su.ecopoints + " ecopoints");
+        }
     }
 
     private void seedScoreEntries() {
