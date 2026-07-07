@@ -34,6 +34,12 @@ public interface QuestUserRepository {
             List<QuestStatus> statuses
     );
 
+    int countByUserIdsAndStatusAndQuestTypes(
+            List<Long> userIds,
+            QuestStatus status,
+            List<QuestType> questTypes
+    );
+
     boolean existsByUserIdAndQuestId(Long userId, Long questId);
     boolean existsByUserIdAndQuestIdAndStatusIn(
             Long userId,

@@ -1,10 +1,10 @@
 package pe.greenminds.ecomind_backend.ranking.application.internal.services;
 
 import org.springframework.stereotype.Service;
+import pe.greenminds.ecomind_backend.achievements.domain.repositories.AchievementRepository;
+import pe.greenminds.ecomind_backend.achievements.domain.repositories.FamilyAchievementRepository;
 import pe.greenminds.ecomind_backend.ranking.application.outboundservices.external.QuestsRankingExternalService;
 import pe.greenminds.ecomind_backend.ranking.domain.model.valueobjects.FamilyReport;
-import pe.greenminds.ecomind_backend.ranking.infrastructure.persistence.jpa.repositories.AchievementRepository;
-import pe.greenminds.ecomind_backend.ranking.infrastructure.persistence.jpa.repositories.FamilyAchievementRepository;
 
 import java.time.OffsetDateTime;
 

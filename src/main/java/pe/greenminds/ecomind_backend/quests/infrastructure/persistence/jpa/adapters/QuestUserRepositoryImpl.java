@@ -51,7 +51,8 @@ public class QuestUserRepositoryImpl implements QuestUserRepository {
 
     @Override
     public Optional<QuestUser> findByUserIdAndQuestId(Long userId, Long questId) {
-        return questUserPersistenceRepository.findByUserIdAndQuestId(userId, questId)
+        return questUserPersistenceRepository
+                .findFirstByUserIdAndQuestIdOrderByIdDesc(userId, questId)
                 .map(QuestUserPersistenceAssembler::toDomainFromPersistence);
     }
 
@@ -121,6 +122,22 @@ public class QuestUserRepositoryImpl implements QuestUserRepository {
                 .stream()
                 .map(QuestUserPersistenceAssembler::toDomainFromPersistence)
                 .toList();
+    }
+
+    @Override
+    public int countByUserIdsAndStatusAndQuestTypes(
+            List<Long> userIds,
+            QuestStatus status,
+            List<QuestType> questTypes
+    ) {
+        if (userIds == null || userIds.isEmpty() || questTypes == null || questTypes.isEmpty()) {
+            return 0;
+        }
+        return (int) questUserPersistenceRepository.countByUserIdsAndStatusAndQuestTypes(
+                userIds,
+                status,
+                questTypes
+        );
     }
 
     @Override
