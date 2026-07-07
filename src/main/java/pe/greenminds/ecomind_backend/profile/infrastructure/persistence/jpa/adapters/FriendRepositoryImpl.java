@@ -26,6 +26,12 @@ public class FriendRepositoryImpl implements FriendRepository {
         return repository.findById(id).map(FriendPersistenceAssembler::toDomainFromPersistence);
     }
 
+    public Optional<Friend> findRelationship(Long userId, Long friendId) {
+        return repository.findRelationship(userId, friendId).stream()
+                .findFirst()
+                .map(FriendPersistenceAssembler::toDomainFromPersistence);
+    }
+
     public List<Friend> search(Long userId, FriendStatus status) {
         return repository.search(userId, status).stream().map(FriendPersistenceAssembler::toDomainFromPersistence).toList();
     }

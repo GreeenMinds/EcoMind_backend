@@ -1,21 +1,34 @@
 package pe.greenminds.ecomind_backend.shared.infrastructure.documentation.openapi.configuration;
 
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Collections;
 import java.util.List;
 
 @Configuration
 public class OpenApiConfiguration {
+    private static final String BEARER_AUTH_SCHEME = "bearerAuth";
 
     @Bean
     public OpenAPI ecomindOpenApi() {
         return new OpenAPI()
+                .addSecurityItem(new SecurityRequirement().addList(BEARER_AUTH_SCHEME))
+                .components(new Components()
+                        .addSecuritySchemes(BEARER_AUTH_SCHEME, new SecurityScheme()
+                                .name(BEARER_AUTH_SCHEME)
+                                .type(SecurityScheme.Type.HTTP)
+                                .scheme("bearer")
+                                .bearerFormat("JWT")))
                 .info(new Info()
                         .title("EcoMind Backend API")
                         .description("EcoMind application REST API documentation.")
@@ -31,5 +44,21 @@ public class OpenApiConfiguration {
                         new Server().url("http://localhost:8092").description("Desarrollo local"),
                         new Server().url("https://ecomind-backend-t2nh.onrender.com").description("Producción")
                 ));
+    }
+
+    @Bean
+    public OpenApiCustomizer publicCommunityOperationsCustomizer() {
+        return openApi -> {
+            var communityPath = openApi.getPaths().get("/api/v1/community/communities");
+            if (communityPath == null) {
+                return;
+            }
+            if (communityPath.getGet() != null) {
+                communityPath.getGet().setSecurity(Collections.emptyList());
+            }
+            if (communityPath.getPost() != null) {
+                communityPath.getPost().setSecurity(Collections.emptyList());
+            }
+        };
     }
 }

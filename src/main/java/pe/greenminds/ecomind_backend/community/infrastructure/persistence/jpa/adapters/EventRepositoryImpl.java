@@ -57,4 +57,9 @@ public class EventRepositoryImpl implements EventRepository {
 
     @Override
     public boolean existsById(Long id) {return eventPersistenceRepository.existsById(id);}
+
+    @Override
+    public int countByCommunityId(Long communityId) {
+        return (int) eventPersistenceRepository.countByCommunityId(communityId);
+    }
 }

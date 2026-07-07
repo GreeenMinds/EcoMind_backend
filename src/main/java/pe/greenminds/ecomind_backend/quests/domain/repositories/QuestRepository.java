@@ -6,11 +6,14 @@ import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Theme;
 
 import java.util.List;
+import java.time.LocalDate;
 import java.util.Optional;
 
 public interface QuestRepository {
     Optional<Quest> findById(Long id);
     List<Quest> findAll();
+    Optional<Quest> findByTypeAndAssignedDate(QuestType questType, LocalDate assignedDate);
+    Optional<Quest> findLatestTemplateByType(QuestType questType);
     List<Quest> search(
             String title,
             Category category,
@@ -22,4 +25,5 @@ public interface QuestRepository {
     void deleteById(Long id);
 
     boolean existsById(Long id);
+    boolean existsByMinigameId(Long minigameId);
 }

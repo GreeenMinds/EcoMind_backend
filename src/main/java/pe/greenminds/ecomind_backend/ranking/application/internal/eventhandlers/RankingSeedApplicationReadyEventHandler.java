@@ -1,0 +1,109 @@
+package pe.greenminds.ecomind_backend.ranking.application.internal.eventhandlers;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
+import pe.greenminds.ecomind_backend.profile.domain.repositories.UserRepository;
+import pe.greenminds.ecomind_backend.ranking.domain.model.valueobjects.RankingType;
+import pe.greenminds.ecomind_backend.ranking.infrastructure.persistence.jpa.entities.RankingEntity;
+import pe.greenminds.ecomind_backend.ranking.infrastructure.persistence.jpa.entities.ScoreEntryEntity;
+import pe.greenminds.ecomind_backend.ranking.infrastructure.persistence.jpa.repositories.RankingRepository;
+import pe.greenminds.ecomind_backend.ranking.infrastructure.persistence.jpa.repositories.ScoreEntryRepository;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+
+@Component
+public class RankingSeedApplicationReadyEventHandler {
+
+    private final RankingRepository rankingRepository;
+    private final ScoreEntryRepository scoreEntryRepository;
+    private final UserRepository userRepository;
+    private final boolean enabled;
+
+    public RankingSeedApplicationReadyEventHandler(
+            RankingRepository rankingRepository,
+            ScoreEntryRepository scoreEntryRepository,
+            UserRepository userRepository,
+            @Value("${ranking.seed.enabled:false}") boolean enabled) {
+        this.rankingRepository = rankingRepository;
+        this.scoreEntryRepository = scoreEntryRepository;
+        this.userRepository = userRepository;
+        this.enabled = enabled;
+    }
+
+    @EventListener
+    public void on(ApplicationReadyEvent event) {
+        if (!enabled) return;
+
+        seedRankings();
+        seedScoreEntries();
+    }
+
+    private void seedRankings() {
+        if (rankingRepository.count() > 0) return;
+
+        rankingRepository.save(new RankingEntity("Global Ranking", RankingType.GLOBAL, new Date(), null, true));
+        rankingRepository.save(new RankingEntity("Weekly Ranking", RankingType.WEEKLY, new Date(), null, true));
+        rankingRepository.save(new RankingEntity("Monthly Ranking", RankingType.MONTHLY, new Date(), null, true));
+
+        System.out.println("Ranking seed: created 3 ranking definitions");
+    }
+
+    private void seedScoreEntries() {
+        if (scoreEntryRepository.count() > 0) return;
+
+        var users = userRepository.findAll();
+        if (users.isEmpty()) {
+            System.out.println("Ranking seed: no users found, skipping score entries");
+            return;
+        }
+
+        var rng = new Random(42);
+        var now = Instant.now();
+        int totalEntries = 0;
+
+        for (var user : users) {
+            var userId = user.getId();
+            var ecopoints = user.getEcopoints() == null ? 100 : user.getEcopoints();
+            var base = Math.max(ecopoints / 5, 20);
+
+            // Recent entries (last 1-3 days) → affect WEEKLY
+            int recentCount = rng.nextInt(2) + 2;
+            for (int i = 0; i < recentCount; i++) {
+                var daysAgo = rng.nextInt(3) + 1;
+                var hoursAgo = rng.nextInt(12);
+                var date = Date.from(now.minus(daysAgo, ChronoUnit.DAYS).minus(hoursAgo, ChronoUnit.HOURS));
+                var score = rng.nextInt(base / 2) + 10;
+                scoreEntryRepository.save(new ScoreEntryEntity(userId, score, "QUEST_COMPLETION", "Completed daily quest", date));
+                totalEntries++;
+            }
+
+            // Medium entries (10-20 days ago) → affect MONTHLY but not WEEKLY
+            int mediumCount = rng.nextInt(2) + 1;
+            for (int i = 0; i < mediumCount; i++) {
+                var daysAgo = rng.nextInt(11) + 10;
+                var date = Date.from(now.minus(daysAgo, ChronoUnit.DAYS));
+                var score = rng.nextInt(base) + 20;
+                scoreEntryRepository.save(new ScoreEntryEntity(userId, score, "QUEST_COMPLETION", "Completed weekly challenge", date));
+                totalEntries++;
+            }
+
+            // Old entries (35-60 days ago) → only affect GLOBAL
+            int oldCount = rng.nextInt(2) + 1;
+            for (int i = 0; i < oldCount; i++) {
+                var daysAgo = rng.nextInt(26) + 35;
+                var date = Date.from(now.minus(daysAgo, ChronoUnit.DAYS));
+                var score = rng.nextInt(base * 2) + 50;
+                scoreEntryRepository.save(new ScoreEntryEntity(userId, score, "ACHIEVEMENT", "Achievement unlocked", date));
+                totalEntries++;
+            }
+        }
+
+        System.out.println("Ranking seed: created " + totalEntries + " score entries for " + users.size() + " users");
+    }
+}

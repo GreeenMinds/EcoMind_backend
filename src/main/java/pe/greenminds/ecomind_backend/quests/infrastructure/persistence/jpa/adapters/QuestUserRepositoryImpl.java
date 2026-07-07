@@ -4,10 +4,12 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Repository;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.QuestUser;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestStatus;
+import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.QuestType;
 import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestUserRepository;
 import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.assemblers.QuestUserPersistenceAssembler;
 import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.repositories.QuestUserPersistenceRepository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,7 +51,30 @@ public class QuestUserRepositoryImpl implements QuestUserRepository {
 
     @Override
     public Optional<QuestUser> findByUserIdAndQuestId(Long userId, Long questId) {
-        return questUserPersistenceRepository.findByUserIdAndQuestId(userId, questId)
+        return questUserPersistenceRepository
+                .findFirstByUserIdAndQuestIdOrderByIdDesc(userId, questId)
+                .map(QuestUserPersistenceAssembler::toDomainFromPersistence);
+    }
+
+    @Override
+    public Optional<QuestUser> findFirstByUserIdAndQuestId(Long userId, Long questId) {
+        return questUserPersistenceRepository
+                .findFirstByUserIdAndQuestIdOrderByIdAsc(userId, questId)
+                .map(QuestUserPersistenceAssembler::toDomainFromPersistence);
+    }
+
+    @Override
+    public Optional<QuestUser> findFirstByUserIdAndQuestIdAndStatusIn(
+            Long userId,
+            Long questId,
+            List<QuestStatus> statuses
+    ) {
+        return questUserPersistenceRepository
+                .findFirstByUserIdAndQuestIdAndStatusInOrderByIdDesc(
+                        userId,
+                        questId,
+                        statuses
+                )
                 .map(QuestUserPersistenceAssembler::toDomainFromPersistence);
     }
 
@@ -62,8 +87,75 @@ public class QuestUserRepositoryImpl implements QuestUserRepository {
     }
 
     @Override
+    public List<QuestUser> findByQuestIdAndStatusIn(
+            Long questId,
+            List<QuestStatus> statuses
+    ) {
+        return questUserPersistenceRepository.findByQuestIdAndStatusIn(questId, statuses)
+                .stream()
+                .map(QuestUserPersistenceAssembler::toDomainFromPersistence)
+                .toList();
+    }
+
+    @Override
+    public List<QuestUser> findDailyQuestUsersBeforeDateAndStatusIn(
+            QuestType questType,
+            LocalDate assignedDate,
+            List<QuestStatus> statuses
+    ) {
+        return questUserPersistenceRepository
+                .findDailyQuestUsersBeforeDateAndStatusIn(questType, assignedDate, statuses)
+                .stream()
+                .map(QuestUserPersistenceAssembler::toDomainFromPersistence)
+                .toList();
+    }
+
+    @Override
+    public List<QuestUser> findDailyQuestUsersByUserIdBeforeDateAndStatusIn(
+            Long userId,
+            QuestType questType,
+            LocalDate assignedDate,
+            List<QuestStatus> statuses
+    ) {
+        return questUserPersistenceRepository
+                .findDailyQuestUsersByUserIdBeforeDateAndStatusIn(userId, questType, assignedDate, statuses)
+                .stream()
+                .map(QuestUserPersistenceAssembler::toDomainFromPersistence)
+                .toList();
+    }
+
+    @Override
+    public int countByUserIdsAndStatusAndQuestTypes(
+            List<Long> userIds,
+            QuestStatus status,
+            List<QuestType> questTypes
+    ) {
+        if (userIds == null || userIds.isEmpty() || questTypes == null || questTypes.isEmpty()) {
+            return 0;
+        }
+        return (int) questUserPersistenceRepository.countByUserIdsAndStatusAndQuestTypes(
+                userIds,
+                status,
+                questTypes
+        );
+    }
+
+    @Override
     public boolean existsByUserIdAndQuestId(Long userId, Long questId) {
         return questUserPersistenceRepository.existsByUserIdAndQuestId(userId, questId);
+    }
+
+    @Override
+    public boolean existsByUserIdAndQuestIdAndStatusIn(
+            Long userId,
+            Long questId,
+            List<QuestStatus> statuses
+    ) {
+        return questUserPersistenceRepository.existsByUserIdAndQuestIdAndStatusIn(
+                userId,
+                questId,
+                statuses
+        );
     }
 
     @Override

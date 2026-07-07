@@ -8,13 +8,17 @@ public class PostResourceFromEntityAssembler {
     private PostResourceFromEntityAssembler() {}
 
     public static PostResource toResourceFromEntity(Post post) {
+        return toResourceFromEntity(post, post.getLikes());
+    }
+
+    public static PostResource toResourceFromEntity(Post post, Integer likes) {
         return new PostResource(
                 post.getId(),
                 post.getCommunityId(),
                 post.getUserId(),
                 post.getContent(),
                 post.getPoints(),
-                post.getLikes(),
+                likes,
                 post.getImageUrl(),
                 post.getCreatedAt()
         );

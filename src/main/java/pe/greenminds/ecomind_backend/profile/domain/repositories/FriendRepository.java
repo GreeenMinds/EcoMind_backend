@@ -9,6 +9,7 @@ import java.util.Optional;
 public interface FriendRepository {
     List<Friend> findAll();
     Optional<Friend> findById(Long id);
+    Optional<Friend> findRelationship(Long userId, Long friendId);
     List<Friend> search(Long userId, FriendStatus status);
     Friend save(Friend friend);
     void deleteById(Long id);

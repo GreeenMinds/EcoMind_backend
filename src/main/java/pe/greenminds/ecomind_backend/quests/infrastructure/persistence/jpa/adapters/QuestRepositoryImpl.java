@@ -1,5 +1,6 @@
 package pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.adapters;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import pe.greenminds.ecomind_backend.quests.domain.model.aggregates.Quest;
 import pe.greenminds.ecomind_backend.quests.domain.model.valueobjects.Category;
@@ -9,6 +10,7 @@ import pe.greenminds.ecomind_backend.quests.domain.repositories.QuestRepository;
 import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.assemblers.QuestPersistenceAssembler;
 import pe.greenminds.ecomind_backend.quests.infrastructure.persistence.jpa.repositories.QuestPersistenceRepository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,6 +52,23 @@ public class QuestRepositoryImpl implements QuestRepository {
     }
 
     @Override
+    public Optional<Quest> findByTypeAndAssignedDate(QuestType questType, LocalDate assignedDate) {
+        return questPersistenceRepository.findByQuestTypeAndAssignedDate(questType, assignedDate)
+                .map(QuestPersistenceAssembler::toDomainFromPersistence);
+    }
+
+    @Override
+    public Optional<Quest> findLatestTemplateByType(QuestType questType) {
+        return questPersistenceRepository.findTemplatesByQuestType(
+                        questType,
+                        PageRequest.of(0, 1)
+                )
+                .stream()
+                .findFirst()
+                .map(QuestPersistenceAssembler::toDomainFromPersistence);
+    }
+
+    @Override
     public Quest save(Quest quest) {
         boolean isNew = quest.getId() == null;
         var savedEntity = questPersistenceRepository.save(QuestPersistenceAssembler.toPersistenceFromDomain(quest));
@@ -70,5 +89,10 @@ public class QuestRepositoryImpl implements QuestRepository {
     @Override
     public boolean existsById(Long id) {
         return questPersistenceRepository.existsById(id);
+    }
+
+    @Override
+    public boolean existsByMinigameId(Long minigameId) {
+        return questPersistenceRepository.existsByMinigameId(minigameId);
     }
 }
