@@ -150,7 +150,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.VIDEO,
                 MaterialCategory.ENERGY,
                 "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600",
-                "https://www.youtube.com/embed/8yVLGMR-R3I",
+                "https://www.youtube.com/embed/1kUE0BZtTRc",
                 10,
                 "es"
         ));
@@ -259,7 +259,7 @@ public class LearningSeedApplicationReadyEventHandler {
                 MaterialType.VIDEO,
                 MaterialCategory.RECYCLE,
                 "https://images.unsplash.com/photo-1611284446318-60a73ac1dbe2?w=600",
-                "https://www.youtube.com/embed/F4aCvGkMfvQ",
+                "https://www.youtube.com/embed/HQTUWK7CM-Y",
                 8,
                 "en"
         ));
