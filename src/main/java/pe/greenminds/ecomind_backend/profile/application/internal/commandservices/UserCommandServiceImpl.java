@@ -66,7 +66,18 @@ public class UserCommandServiceImpl implements UserCommandService {
         var user = userRepository.findById(command.userId());
         if (user.isEmpty()) return Result.failure(ApplicationError.notFound("User", command.userId().toString()));
         user.get().updateStats(command.gemBalance(), command.ecopoints(), command.streak(), command.lastStreakDate());
-        return Result.success(userRepository.save(user.get()));
+        var saved = userRepository.save(user.get());
+        awardStreakBonus(saved, command.streak());
+        return Result.success(saved);
+    }
+
+    private void awardStreakBonus(User user, Integer newStreak) {
+        if (newStreak == null || newStreak <= 0 || newStreak % 7 != 0) return;
+        var multiplier = Math.min(newStreak / 7, 3);
+        var bonus = newStreak * multiplier;
+        user.getEcopoints();
+        user.updateStats(null, (user.getEcopoints() == null ? 0 : user.getEcopoints()) + bonus, user.getStreak(), user.getLastStreakDate());
+        userRepository.save(user);
     }
 
     @Transactional

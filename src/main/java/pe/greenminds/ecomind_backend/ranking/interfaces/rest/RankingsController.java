@@ -69,8 +69,9 @@ public class RankingsController {
     @GetMapping("/{rankingType}/leaderboard")
     public ResponseEntity<List<LeaderboardEntryResource>> getLeaderboard(
             @PathVariable String rankingType,
-            @RequestParam(required = false) Long currentUserId) {
-        var entries = leaderboardService.getLeaderboard(rankingType, currentUserId);
+            @RequestParam(required = false) Long currentUserId,
+            @RequestParam(required = false) Long communityId) {
+        var entries = leaderboardService.getLeaderboard(rankingType, currentUserId, communityId);
         return ResponseEntity.ok(entries);
     }
 

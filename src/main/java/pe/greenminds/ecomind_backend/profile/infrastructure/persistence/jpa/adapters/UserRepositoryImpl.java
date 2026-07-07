@@ -29,6 +29,13 @@ public class UserRepositoryImpl implements UserRepository {
         return repository.findByEmail(email).map(UserPersistenceAssembler::toDomainFromPersistence);
     }
 
+    public List<User> findByCommunityId(Long communityId) {
+        return repository.findByCommunityId(communityId)
+                .stream()
+                .map(UserPersistenceAssembler::toDomainFromPersistence)
+                .toList();
+    }
+
     public User save(User user) {
         return UserPersistenceAssembler.toDomainFromPersistence(
                 repository.save(UserPersistenceAssembler.toPersistenceFromDomain(user)));
