@@ -4,7 +4,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import pe.greenminds.ecomind_backend.monetization.domain.model.aggregates.Cosmetic;
+import pe.greenminds.ecomind_backend.monetization.domain.model.aggregates.UserCosmetic;
+import pe.greenminds.ecomind_backend.monetization.domain.model.valueobjects.CosmeticType;
+import pe.greenminds.ecomind_backend.monetization.domain.repositories.CosmeticRepository;
+import pe.greenminds.ecomind_backend.monetization.domain.repositories.UserCosmeticRepository;
+import pe.greenminds.ecomind_backend.profile.domain.model.aggregates.Family;
+import pe.greenminds.ecomind_backend.profile.domain.model.aggregates.FamilyUser;
 import pe.greenminds.ecomind_backend.profile.domain.model.aggregates.User;
+import pe.greenminds.ecomind_backend.profile.domain.model.valueobjects.FamilyRole;
+import pe.greenminds.ecomind_backend.profile.domain.repositories.FamilyRepository;
+import pe.greenminds.ecomind_backend.profile.domain.repositories.FamilyUserRepository;
 import pe.greenminds.ecomind_backend.profile.domain.repositories.UserRepository;
 import pe.greenminds.ecomind_backend.ranking.domain.model.valueobjects.RankingType;
 import pe.greenminds.ecomind_backend.ranking.infrastructure.persistence.jpa.entities.RankingEntity;
@@ -13,6 +23,7 @@ import pe.greenminds.ecomind_backend.ranking.infrastructure.persistence.jpa.repo
 import pe.greenminds.ecomind_backend.ranking.infrastructure.persistence.jpa.repositories.ScoreEntryRepository;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -27,16 +38,28 @@ public class RankingSeedApplicationReadyEventHandler {
     private final RankingRepository rankingRepository;
     private final ScoreEntryRepository scoreEntryRepository;
     private final UserRepository userRepository;
+    private final FamilyRepository familyRepository;
+    private final FamilyUserRepository familyUserRepository;
+    private final CosmeticRepository cosmeticRepository;
+    private final UserCosmeticRepository userCosmeticRepository;
     private final boolean enabled;
 
     public RankingSeedApplicationReadyEventHandler(
             RankingRepository rankingRepository,
             ScoreEntryRepository scoreEntryRepository,
             UserRepository userRepository,
+            FamilyRepository familyRepository,
+            FamilyUserRepository familyUserRepository,
+            CosmeticRepository cosmeticRepository,
+            UserCosmeticRepository userCosmeticRepository,
             @Value("${ranking.seed.enabled:false}") boolean enabled) {
         this.rankingRepository = rankingRepository;
         this.scoreEntryRepository = scoreEntryRepository;
         this.userRepository = userRepository;
+        this.familyRepository = familyRepository;
+        this.familyUserRepository = familyUserRepository;
+        this.cosmeticRepository = cosmeticRepository;
+        this.userCosmeticRepository = userCosmeticRepository;
         this.enabled = enabled;
     }
 
@@ -46,6 +69,8 @@ public class RankingSeedApplicationReadyEventHandler {
 
         seedRankings();
         seedUsers();
+        seedFamilies();
+        seedAvatars();
         seedScoreEntries();
     }
 
@@ -76,6 +101,61 @@ public class RankingSeedApplicationReadyEventHandler {
                     OffsetDateTime.now(), 0, su.ecopoints, null);
             userRepository.save(user);
             System.out.println("Ranking seed: created user " + su.name + " with " + su.ecopoints + " ecopoints");
+        }
+    }
+
+    private void seedFamilies() {
+        if (!familyRepository.findAll().isEmpty()) return;
+
+        var family = familyRepository.save(new Family(null, "Familia Verde", "eco-friendly"));
+        System.out.println("Ranking seed: created family 'Familia Verde' with id " + family.getId());
+
+        record FamilyMember(String email, FamilyRole role) {}
+
+        for (var m : List.of(
+                new FamilyMember("carla.verde@ranking-seed.com", FamilyRole.PARENT),
+                new FamilyMember("miguel.rios@ranking-seed.com", FamilyRole.PARENT),
+                new FamilyMember("pedro.bosque@ranking-seed.com", FamilyRole.CHILD),
+                new FamilyMember("ana.tierra@ranking-seed.com", FamilyRole.CHILD)
+        )) {
+            var user = userRepository.findByEmail(m.email);
+            if (user.isEmpty()) continue;
+            if (familyUserRepository.existsByUserId(user.get().getId())) continue;
+            familyUserRepository.save(new FamilyUser(null, user.get().getId(), family.getId(), m.role, OffsetDateTime.now()));
+            System.out.println("Ranking seed: added " + m.email + " as " + m.role + " to 'Familia Verde'");
+        }
+    }
+
+    private void seedAvatars() {
+        record AvatarDef(String name, String email, String imageUrl) {}
+
+        for (var a : List.of(
+                new AvatarDef("Avatar Naturaleza", "carla.verde@ranking-seed.com",
+                        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop"),
+                new AvatarDef("Avatar Océano", "miguel.rios@ranking-seed.com",
+                        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop"),
+                new AvatarDef("Avatar Sol", "laura.solar@ranking-seed.com",
+                        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop"),
+                new AvatarDef("Avatar Bosque", "pedro.bosque@ranking-seed.com",
+                        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop"),
+                new AvatarDef("Avatar Tierra", "ana.tierra@ranking-seed.com",
+                        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop")
+        )) {
+            var user = userRepository.findByEmail(a.email);
+            if (user.isEmpty()) continue;
+
+            var cosmetic = cosmeticRepository.findAll().stream()
+                    .filter(c -> c.getName().equals(a.name))
+                    .findFirst()
+                    .orElseGet(() -> cosmeticRepository.save(
+                            new Cosmetic(a.name, "Avatar personalizado", 0, CosmeticType.AVATAR, a.imageUrl)));
+
+            var alreadyEquipped = userCosmeticRepository.findByUserId(user.get().getId()).stream()
+                    .anyMatch(UserCosmetic::getEquipped);
+            if (alreadyEquipped) continue;
+
+            userCosmeticRepository.save(new UserCosmetic(user.get().getId(), cosmetic.getId(), LocalDateTime.now(), true));
+            System.out.println("Ranking seed: equipped avatar for " + a.email);
         }
     }
 
